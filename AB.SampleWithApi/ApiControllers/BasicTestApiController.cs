@@ -9,14 +9,24 @@ namespace AB.SampleWithApi.ApiControllers
     public class BasicTestApiController : ApiController
     {
         /// <summary>
-        /// Save Some Data somewhere
+        /// Save Some Data somewhere <para> test </para>
+        /// Test
+        /// <see cref="AB.SampleWithApi.MyDto"/>
         /// </summary>
         /// <param name="a">input of json format </param>
         /// <returns>
-        /// [{ "name": "propertyValue", "test": "propertyValue"  }]
+        ///     some other return text 
+        ///     <para>For fun</para> text here also
+        ///     <para>SUCCESS</para>
+        ///         <para>When Success</para>
+        ///         <code>[{ "name": "propertyValue", "test": "propertyValue"  }]</code>
+        ///     <para>FAIL</para>
+        ///         <para>When Success</para>
+        ///         <code>Error Object 1</code>
+        ///         <code>Error Object 12123123123</code>
         /// </returns>
         /// <example>
-        ///  [{ "name": "propertyValue", "test": "propertyValue"  }]
+        ///  call example
         /// </example>
         [HttpPost]
         public HttpResponse SaveSomeData([FromBody]string a)

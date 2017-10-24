@@ -41,23 +41,21 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
 ";
             //----------------------------------------------
             string strResponse = @"
-* **Success Response:**
-  
-<<<SUCCESS_RESPONSE>>>
- 
-* **Error Response:**
+* **Returns**
 
-<<<ERROR_RESPONSE>>>
+<<<PARAM_GENERIC_RETURN>>>
+<<<PARAM_IF_SUCCESS_DEFINED>>>
+<<<PARAM_IF_FAILED_DEFINED>>>
 ";
             //----------------------------------------------
             string strExample = @"
-* **Sample Call:**
+* **Example:**
 
 <<<EXAMPLE>>>
 ";
             //----------------------------------------------
             string strNotes = @"
-* **Notes:**
+* **Extra Notes:**
 
 <<<NOTES>>>
 ";

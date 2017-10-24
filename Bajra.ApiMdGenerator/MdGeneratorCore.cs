@@ -46,7 +46,7 @@ namespace Bajra.ApiMdGenerator
 
             return dirInfo;
         }
-        
+
 
         private void GenerateMD(List<ApiControllerObj> apiControllerList, string savePath, string xmlPath)
         {
@@ -82,7 +82,7 @@ namespace Bajra.ApiMdGenerator
                     if (xmlCommentHelper != null)
                         xmlMethodObj = xmlCommentHelper.GetMemberDefinition(methodItem);
 
-                    sbr_mdFileForMethod.Replace(TemplateConsts.ADDITIONAL_INFORMATION, xmlMethodObj?.Summary ?? "No information found.");
+                    sbr_mdFileForMethod.Replace(TemplateConsts.ADDITIONAL_INFORMATION, xmlMethodObj?.Summary);
 
                     sbr_mdFileForMethod.Replace(TemplateConsts.URL, "/api/" + methodItem.MethodName.Replace("Controller", ""));
 
@@ -91,7 +91,7 @@ namespace Bajra.ApiMdGenerator
                     foreach (var paramItem in methodItem.ParameterArray)
                     {
                         string paramDesc = xmlMethodObj?.ParamList.FirstOrDefault(t => t.Name == paramItem.ParamName)?.Value ?? "";
-                        
+
                         //TODO:  Handle IsFromBody
                         if (paramItem.IsFromBody)
                         {
@@ -115,6 +115,37 @@ namespace Bajra.ApiMdGenerator
                     sbr_mdFileForMethod.Replace(TemplateConsts.PARAM_LIST_REQUIRED, sbr_RequiredParams.ToString());
 
                     sbr_mdFileForMethod.Replace(TemplateConsts.PARAM_LIST_OPTIONAL, sbr_OptionalParams.ToString());
+
+                    if (xmlMethodObj != null)
+                    {
+                        if (string.IsNullOrEmpty(xmlMethodObj.Example))
+                            sbr_mdFileForMethod.Replace(TemplateConsts.EXAMPLE, TemplateConsts.TEXT_NONE);
+                        else
+                            sbr_mdFileForMethod.Replace(TemplateConsts.EXAMPLE, xmlMethodObj.Example);
+                        
+                        if (string.IsNullOrEmpty(xmlMethodObj.Returns))
+                            sbr_mdFileForMethod.Replace(TemplateConsts.RETURN_GENERIC_RESPONSE, TemplateConsts.TEXT_NONE);
+                        else
+                        {
+                            sbr_mdFileForMethod.Replace(TemplateConsts.RETURN_GENERIC_RESPONSE, xmlMethodObj.Returns);
+                        }
+
+                        if (string.IsNullOrEmpty(xmlMethodObj.Returns_WithSuccess))
+                            sbr_mdFileForMethod.Replace(TemplateConsts.SUCCESS_RESPONSE, TemplateConsts.TEXT_NONE);
+                        else
+                        {
+                            sbr_mdFileForMethod.Replace(TemplateConsts.SUCCESS_RESPONSE, xmlMethodObj.Returns);
+                        }
+
+                        if (string.IsNullOrEmpty(xmlMethodObj.Returns_WithFail))
+                            sbr_mdFileForMethod.Replace(TemplateConsts.FAIL_RESPONSE, TemplateConsts.TEXT_NONE);
+                        else
+                        {
+                            sbr_mdFileForMethod.Replace(TemplateConsts.FAIL_RESPONSE, xmlMethodObj.Returns);
+                        }
+
+                        //TODO:Handle for notes
+                    }
 
                     string fileNameOnly = GetValidFileName(methodItem.MethodName);
 

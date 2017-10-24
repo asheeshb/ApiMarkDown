@@ -28,3 +28,7 @@ In the **Properties** of the project, under **Build tab** set check on the **XML
 The project reference for **System.Web.Http** must match the version that is reference within the .NET assemply for which the MD files are to be generated.
 
 If required remove the existing **System.Web.Http** reference and point to any specific version of the same DLL.
+
+# References:
+
+https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/xmldoc/recommended-tags-for-documentation-comments

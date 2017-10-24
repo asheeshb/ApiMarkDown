@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
+using Bajra.Utils;
 
 namespace Bajra.ApiMdGenerator
 {
@@ -84,13 +85,11 @@ namespace Bajra.ApiMdGenerator
                     if (c.Name == "summary")
                         memDef.Summary = this.GetXml_Summary(c);
                     else if (c.Name == "example")
-                        memDef.Example = this.GetXml_Example(c);
+                        this.HandleXml_Example(c, ref memDef);
                     else if (c.Name == "returns")
-                        memDef.Returns = this.GetXml_Returns(c);
+                        this.HandleXml_Returns(c, ref memDef);
                     else if (c.Name == "param")
-                    {
                         memDef.ParamList.Add(this.GetXml_Param(c));
-                    }
                 }
                 catch (Exception ex)
                 {
@@ -107,20 +106,89 @@ namespace Bajra.ApiMdGenerator
         #region Xml Element Handlers
         private string GetXml_Summary(XmlElement ele)
         {
-            //TODO: process the internal XML tags
-            return ele.InnerText.Trim();
+            StringBuilder sbr = new StringBuilder();
+
+            ProcessInnerElement(ele, ref sbr, 0);
+
+            return sbr.ToString();
         }
 
-        private string GetXml_Example(XmlElement ele)
+        private void HandleXml_Example(XmlElement ele, ref MethodXmlElement memDef)
         {
-            //TODO: process the internal XML tags
-            return ele.InnerText;
+            StringBuilder sbr = new StringBuilder();
+
+            ProcessInnerElement(ele, ref sbr, 1);
+
+            memDef.Example = sbr.ToString();
         }
 
-        private string GetXml_Returns(XmlElement ele)
+        private void HandleXml_Returns(XmlElement ele, ref MethodXmlElement memDef)
         {
-            //TODO: process the internal XML tags
-            return ele.InnerText;
+            StringBuilder sbr = new StringBuilder();
+
+            List<XmlNode> childNodeList = ele.ChildNodes.Cast<XmlNode>().ToList();
+
+            if (childNodeList.Any(t => t.NodeType == XmlNodeType.Element && t.Name == "para"
+                    && t.Value.IsEqualToAny(StringComparison.InvariantCultureIgnoreCase, "fail", "failed", "fails", "success", "succeed"))
+             )
+            {
+
+                //Means there is a clear division of success and failed
+                for (int i = 0; i < childNodeList.Count; i++)
+                {
+                    XmlNode xmlNode = childNodeList[i];
+
+                    switch (xmlNode.NodeType)
+                    {
+                        case XmlNodeType.Text:
+                            sbr.Append(this.GetPaddingTabString(1));
+                            sbr.Append(xmlNode.InnerText.Trim());
+                            break;
+
+                        case XmlNodeType.Element:
+                            if (xmlNode.Name == "para")
+                            {
+                                if (xmlNode.Value.IsEqualToAny(StringComparison.InvariantCultureIgnoreCase, "fail", "failed", "fails"))
+                                {
+                                    //keep reading subsequent nodes till not end OR success is encountered
+
+                                    StringBuilder sbr_failed = new StringBuilder();
+                                    bool isForSuccess = false;
+                                    ProcessInnerElement_Till_SuccessOrFailOrEnd(isForSuccess, childNodeList, ref i, ref sbr_failed, 1);
+                                    memDef.Returns_WithFail = sbr_failed.ToString();
+
+                                }
+                                else if (xmlNode.Value.IsEqualToAny(StringComparison.InvariantCultureIgnoreCase, "success", "succeed"))
+                                {
+                                    //keep reading subsequent nodes till not end OR failed is encountered
+
+                                    StringBuilder sbr_success = new StringBuilder();
+                                    bool isForSuccess = true;
+                                    ProcessInnerElement_Till_SuccessOrFailOrEnd(isForSuccess, childNodeList, ref i, ref sbr_success, 1);
+                                    memDef.Returns_WithSuccess = sbr_success.ToString();
+                                }
+                                else
+                                {
+                                    ProcessInnerElement(xmlNode, ref sbr, 1);
+                                }
+
+                            }
+                            break;
+                        default:
+                            ProcessInnerElement(xmlNode, ref sbr, 1);
+                            memDef.Returns = sbr.ToString();
+                            break;
+                    }
+
+                }
+            }
+            else
+            {
+                //means consider as simple return statement
+                ProcessInnerElement(ele, ref sbr, 1);
+            }
+
+            memDef.Returns = sbr.ToString();
         }
 
         private ParamXmlElement GetXml_Param(XmlElement ele)
@@ -134,6 +202,68 @@ namespace Bajra.ApiMdGenerator
                 Name = nameAttribute.Value,
                 Value = ele.InnerText
             };
+        }
+
+        private string GetPaddingTabString(int tabCount)
+        {
+            StringBuilder sbr = new StringBuilder();
+            for (var i = 0; i < tabCount; i++)
+            {
+                sbr.Append("    ");
+            }
+            return sbr.ToString();
+        }
+
+        private void ProcessInnerElement(XmlNode ele, ref StringBuilder sbr, int currentPaddingTabCount)
+        {
+            foreach (XmlNode xmlNode in ele.ChildNodes)
+            {
+                switch (xmlNode.NodeType)
+                {
+                    case XmlNodeType.Text:
+                        sbr.Append(this.GetPaddingTabString(currentPaddingTabCount));
+                        sbr.Append(xmlNode.InnerText.Trim());
+                        break;
+
+                    case XmlNodeType.Element:
+
+                        if (xmlNode.Name == "see")
+                            sbr.AppendFormat(" **{0}** ", xmlNode.Attributes.Cast<XmlAttribute>().FirstOrDefault(a => a.Name == "cref")?.Value ?? "");
+                        else if (xmlNode.Name == "code")
+                        {
+                            sbr.AppendLine();
+                            sbr.AppendLine();
+                            sbr.Append("```csharp");
+                            sbr.AppendLine();
+                            sbr.Append(xmlNode.InnerText);
+                            sbr.AppendLine();
+                            sbr.Append("```");
+                            sbr.AppendLine();
+                            sbr.AppendLine();
+                        }
+                        else if (xmlNode.Name == "para")
+                        {
+                            sbr.AppendLine();
+                            sbr.AppendLine();
+                            ProcessInnerElement(xmlNode, ref sbr, currentPaddingTabCount);
+                            sbr.AppendLine();
+                            sbr.AppendLine();
+                        }
+                        else
+                        {
+                            ProcessInnerElement(xmlNode, ref sbr, currentPaddingTabCount);
+                        }
+
+                        break;
+                }
+            }
+
+        }
+
+        private void ProcessInnerElement_Till_SuccessOrFailOrEnd(bool isForSuccess, IEnumerable<XmlNode> allChildElements, ref int curChildIndex, ref StringBuilder sbr, int currentPaddingTabCount)
+        {
+            //TODO
+
         }
         #endregion Xml Element Handlers
     }
