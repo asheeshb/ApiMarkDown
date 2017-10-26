@@ -100,6 +100,9 @@ namespace Bajra.ApiMdGenerator
             if (string.IsNullOrWhiteSpace(memDef.Summary))
                 memDef.Summary = "No information found.";
 
+            if (string.IsNullOrWhiteSpace(memDef.DatasParamFromBody))
+                memDef.DatasParamFromBody = "N/A";
+
             return memDef;
         }
 
@@ -124,60 +127,34 @@ namespace Bajra.ApiMdGenerator
 
         private void HandleXml_Returns(XmlElement ele, ref MethodXmlElement memDef)
         {
-            StringBuilder sbr = new StringBuilder();
+            StringBuilder sbrReturn = new StringBuilder();
+            StringBuilder sbr_failed = new StringBuilder();
+            StringBuilder sbr_success = new StringBuilder();
 
             List<XmlNode> childNodeList = ele.ChildNodes.Cast<XmlNode>().ToList();
 
             if (childNodeList.Any(t => t.NodeType == XmlNodeType.Element && t.Name == "para"
-                    && t.Value.IsEqualToAny(StringComparison.InvariantCultureIgnoreCase, "fail", "failed", "fails", "success", "succeed"))
+                    && t.InnerText.IsEqualToAny(StringComparison.InvariantCultureIgnoreCase, "fail", "failed", "fails", "success", "succeed")
+                    )
              )
             {
-
                 //Means there is a clear division of success and failed
                 for (int i = 0; i < childNodeList.Count; i++)
                 {
                     XmlNode xmlNode = childNodeList[i];
 
-                    switch (xmlNode.NodeType)
+                    if (xmlNode.NodeType != XmlNodeType.Element && xmlNode.Name == "para")
+                        ProcessElement(xmlNode, ref sbrReturn, 1);
+                    else
                     {
-                        case XmlNodeType.Text:
-                            sbr.Append(this.GetPaddingTabString(1));
-                            sbr.Append(xmlNode.InnerText.Trim());
-                            break;
-
-                        case XmlNodeType.Element:
-                            if (xmlNode.Name == "para")
-                            {
-                                if (xmlNode.Value.IsEqualToAny(StringComparison.InvariantCultureIgnoreCase, "fail", "failed", "fails"))
-                                {
-                                    //keep reading subsequent nodes till not end OR success is encountered
-
-                                    StringBuilder sbr_failed = new StringBuilder();
-                                    bool isForSuccess = false;
-                                    ProcessInnerElement_Till_SuccessOrFailOrEnd(isForSuccess, childNodeList, ref i, ref sbr_failed, 1);
-                                    memDef.Returns_WithFail = sbr_failed.ToString();
-
-                                }
-                                else if (xmlNode.Value.IsEqualToAny(StringComparison.InvariantCultureIgnoreCase, "success", "succeed"))
-                                {
-                                    //keep reading subsequent nodes till not end OR failed is encountered
-
-                                    StringBuilder sbr_success = new StringBuilder();
-                                    bool isForSuccess = true;
-                                    ProcessInnerElement_Till_SuccessOrFailOrEnd(isForSuccess, childNodeList, ref i, ref sbr_success, 1);
-                                    memDef.Returns_WithSuccess = sbr_success.ToString();
-                                }
-                                else
-                                {
-                                    ProcessInnerElement(xmlNode, ref sbr, 1);
-                                }
-
-                            }
-                            break;
-                        default:
-                            ProcessInnerElement(xmlNode, ref sbr, 1);
-                            memDef.Returns = sbr.ToString();
-                            break;
+                        if (xmlNode.InnerText.IsEqualToAny(StringComparison.InvariantCultureIgnoreCase, "fail", "failed", "fails"))
+                            //keep reading subsequent nodes till not end OR success OR another Fail is encountered
+                            ProcessElement_Till_SuccessOrFailOrEnd(childNodeList, ref i, ref sbr_failed, 1);
+                        else if (xmlNode.InnerText.IsEqualToAny(StringComparison.InvariantCultureIgnoreCase, "success", "succeed"))
+                            //keep reading subsequent nodes till not end OR success OR another Fail is encountered
+                            ProcessElement_Till_SuccessOrFailOrEnd(childNodeList, ref i, ref sbr_success, 1);
+                        else
+                            ProcessInnerElement(xmlNode, ref sbrReturn, 1);
                     }
 
                 }
@@ -185,10 +162,13 @@ namespace Bajra.ApiMdGenerator
             else
             {
                 //means consider as simple return statement
-                ProcessInnerElement(ele, ref sbr, 1);
+                ProcessInnerElement(ele, ref sbrReturn, 1);
             }
 
-            memDef.Returns = sbr.ToString();
+
+            memDef.Returns = sbrReturn.ToString();
+            memDef.Returns_WithFail = sbr_failed.ToString();
+            memDef.Returns_WithSuccess = sbr_success.ToString();
         }
 
         private ParamXmlElement GetXml_Param(XmlElement ele)
@@ -214,56 +194,80 @@ namespace Bajra.ApiMdGenerator
             return sbr.ToString();
         }
 
+        private void ProcessElement(XmlNode xmlNode, ref StringBuilder sbr, int currentPaddingTabCount)
+        {
+            switch (xmlNode.NodeType)
+            {
+                case XmlNodeType.Text:
+                    sbr.Append(this.GetPaddingTabString(currentPaddingTabCount));
+                    sbr.Append(xmlNode.InnerText.Trim());
+                    break;
+
+                case XmlNodeType.Element:
+
+                    if (xmlNode.Name == "see")
+                        sbr.AppendFormat(" **{0}** ", xmlNode.Attributes.Cast<XmlAttribute>().FirstOrDefault(a => a.Name == "cref")?.Value ?? "");
+                    else if (xmlNode.Name == "code")
+                    {
+                        sbr.AppendLine();
+                        sbr.AppendLine();
+                        sbr.Append(this.GetPaddingTabString(currentPaddingTabCount));
+                        sbr.Append("```csharp");
+                        sbr.AppendLine();
+                        sbr.Append(xmlNode.InnerText);
+                        sbr.AppendLine();
+                        sbr.Append(this.GetPaddingTabString(currentPaddingTabCount));
+                        sbr.Append("```");
+                        sbr.AppendLine();
+                        sbr.AppendLine();
+                    }
+                    else if (xmlNode.Name == "para")
+                    {
+                        sbr.AppendLine();
+                        sbr.AppendLine();
+                        ProcessInnerElement(xmlNode, ref sbr, currentPaddingTabCount);
+                        sbr.AppendLine();
+                        sbr.AppendLine();
+                    }
+                    else
+                    {
+                        ProcessInnerElement(xmlNode, ref sbr, currentPaddingTabCount);
+                    }
+
+                    break;
+            }
+        }
+
         private void ProcessInnerElement(XmlNode ele, ref StringBuilder sbr, int currentPaddingTabCount)
         {
             foreach (XmlNode xmlNode in ele.ChildNodes)
             {
-                switch (xmlNode.NodeType)
-                {
-                    case XmlNodeType.Text:
-                        sbr.Append(this.GetPaddingTabString(currentPaddingTabCount));
-                        sbr.Append(xmlNode.InnerText.Trim());
-                        break;
-
-                    case XmlNodeType.Element:
-
-                        if (xmlNode.Name == "see")
-                            sbr.AppendFormat(" **{0}** ", xmlNode.Attributes.Cast<XmlAttribute>().FirstOrDefault(a => a.Name == "cref")?.Value ?? "");
-                        else if (xmlNode.Name == "code")
-                        {
-                            sbr.AppendLine();
-                            sbr.AppendLine();
-                            sbr.Append("```csharp");
-                            sbr.AppendLine();
-                            sbr.Append(xmlNode.InnerText);
-                            sbr.AppendLine();
-                            sbr.Append("```");
-                            sbr.AppendLine();
-                            sbr.AppendLine();
-                        }
-                        else if (xmlNode.Name == "para")
-                        {
-                            sbr.AppendLine();
-                            sbr.AppendLine();
-                            ProcessInnerElement(xmlNode, ref sbr, currentPaddingTabCount);
-                            sbr.AppendLine();
-                            sbr.AppendLine();
-                        }
-                        else
-                        {
-                            ProcessInnerElement(xmlNode, ref sbr, currentPaddingTabCount);
-                        }
-
-                        break;
-                }
+                ProcessElement(xmlNode, ref sbr, currentPaddingTabCount);
             }
-
         }
 
-        private void ProcessInnerElement_Till_SuccessOrFailOrEnd(bool isForSuccess, IEnumerable<XmlNode> allChildElements, ref int curChildIndex, ref StringBuilder sbr, int currentPaddingTabCount)
+        private void ProcessElement_Till_SuccessOrFailOrEnd(IEnumerable<XmlNode> allChildElements, ref int curChildIndex, ref StringBuilder sbr, int currentPaddingTabCount)
         {
-            //TODO
+            var allChildElementsList = allChildElements.ToList();
 
+            int i = curChildIndex + 1;
+
+            for (; i < allChildElementsList.Count; i++)
+            {
+                XmlNode xmlNode = allChildElementsList[i];
+
+                if (xmlNode.NodeType == XmlNodeType.Element && xmlNode.Name == "para"
+                      && xmlNode.InnerText.IsEqualToAny(StringComparison.InvariantCultureIgnoreCase, "fail", "failed", "fails", "success", "succeed")
+                )
+                {
+                    curChildIndex = i - 1;
+                    return;
+                }
+                else
+                    ProcessElement(xmlNode, ref sbr, currentPaddingTabCount);
+            }
+
+            curChildIndex = i;
         }
         #endregion Xml Element Handlers
     }

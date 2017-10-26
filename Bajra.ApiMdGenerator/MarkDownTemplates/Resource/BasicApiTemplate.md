@@ -11,29 +11,39 @@
   
 * **URL Params**
 
-   **Required:**
+   ***Required:***
  
-<<<PARAM_LIST_REQUIRED>>>
+    <<<PARAM_LIST_REQUIRED>>>
 
-   **Optional:**
+   ***Optional:***
  
-<<<PARAM_LIST_OPTIONAL>>>
+    <<<PARAM_LIST_OPTIONAL>>>
 
 * **Data Params**
 
 <<<PARAM_FROM_BODY>>>
 
+----
+
+* **Returns**
+
+<<<PARAM_GENERIC_RETURN>>>
+
 * **Success Response:**
   
-<<<SUCCESS_RESPONSE>>>
+<<<PARAM_IF_SUCCESS_DEFINED>>>
  
 * **Error Response:**
 
-<<<ERROR_RESPONSE>>>
-  
-* **Sample Call:**
+<<<PARAM_IF_FAILED_DEFINED>>>
+
+----
+ 
+* **Example:**
 
 <<<EXAMPLE>>>
+
+----
 
 * **Notes:**
 

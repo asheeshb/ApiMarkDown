@@ -22,6 +22,11 @@ namespace AB.SampleWithApi.ApiControllers
         ///         <code>
         ///             [{ "name": "propertyValue", "test": "propertyValue"  }]
         ///         </code>
+        ///     <para>SUCCESS</para>
+        ///         <para>When Success Again</para>
+        ///         <code>
+        ///             [{ "name": "propertyValue", "test": "propertyValue"  }]
+        ///         </code>
         ///     <para>FAIL</para>
         ///         <para>Code: 401 UNAUTHORIZED</para>
         ///         <code>

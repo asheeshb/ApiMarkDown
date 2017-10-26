@@ -10,11 +10,11 @@ namespace Bajra.Utils
     {
         public static bool IsEqualToAny(this string src, StringComparison strCmpType, params string[] stringArrayToCompare)
         {
-            if (src == null && stringArrayToCompare.Any(t => t == null))
-                return true;
-
-            if (src == string.Empty && stringArrayToCompare.Any(t => t == string.Empty))
-                return true;
+            if (src == null)
+                return stringArrayToCompare.Any(t => t == null);
+            
+            if (src == string.Empty)
+                return stringArrayToCompare.Any(t => t == string.Empty);
 
             foreach (string str in stringArrayToCompare)
             {

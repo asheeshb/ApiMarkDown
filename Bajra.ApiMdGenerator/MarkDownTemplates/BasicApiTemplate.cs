@@ -12,36 +12,43 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
         {
             StringBuilder sbr = new StringBuilder();
             string templateMain = @"
-**<<<API_NAME>>>**
+## <<<API_NAME>>>
 ----
 
 <<<ADDITIONAL_INFORMATION>>>
 
 ----
 
-* **URL** : `<<<URL>>>`
+### Controller : `<<<CONTROLLER_NAME>>>`
 
-* **Method:**  <<<METHOD_TYPE>>>
-  
-* **URL Params**
+### URL : `<<<URL>>>`
 
-   **Required:**
+### Method : <<<METHOD_TYPE>>>
+
+----
+
+### URL Params :
+
+* ***Required***
  
 <<<PARAM_LIST_REQUIRED>>>
 
-   **Optional:**
+* ***Optional:***
  
 <<<PARAM_LIST_OPTIONAL>>>
 ";
             //----------------------------------------------
             string postStr = @"
-* **Data Params**
+### Data Params :
 
 <<<PARAM_FROM_BODY>>>
+
+----
+
 ";
             //----------------------------------------------
             string strResponse = @"
-* **Returns**
+### Returns : 
 
 <<<PARAM_GENERIC_RETURN>>>
 
@@ -53,16 +60,21 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
 
 <<<PARAM_IF_FAILED_DEFINED>>>
 
+----
+
 ";
             //----------------------------------------------
             string strExample = @"
-* **Example:**
+### Example :
 
 <<<EXAMPLE>>>
+
+----
+
 ";
             //----------------------------------------------
             string strNotes = @"
-* **Extra Notes:**
+### Extra Notes :
 
 <<<NOTES>>>
 ";
