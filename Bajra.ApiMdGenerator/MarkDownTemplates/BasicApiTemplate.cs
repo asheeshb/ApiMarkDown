@@ -44,8 +44,15 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
 * **Returns**
 
 <<<PARAM_GENERIC_RETURN>>>
+
+* **Success Response:**
+  
 <<<PARAM_IF_SUCCESS_DEFINED>>>
+ 
+* **Error Response:**
+
 <<<PARAM_IF_FAILED_DEFINED>>>
+
 ";
             //----------------------------------------------
             string strExample = @"

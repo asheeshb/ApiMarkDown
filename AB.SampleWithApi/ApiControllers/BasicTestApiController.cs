@@ -19,11 +19,18 @@ namespace AB.SampleWithApi.ApiControllers
         ///     <para>For fun</para> text here also
         ///     <para>SUCCESS</para>
         ///         <para>When Success</para>
-        ///         <code>[{ "name": "propertyValue", "test": "propertyValue"  }]</code>
+        ///         <code>
+        ///             [{ "name": "propertyValue", "test": "propertyValue"  }]
+        ///         </code>
         ///     <para>FAIL</para>
-        ///         <para>When Success</para>
-        ///         <code>Error Object 1</code>
-        ///         <code>Error Object 12123123123</code>
+        ///         <para>Code: 401 UNAUTHORIZED</para>
+        ///         <code>
+        ///             {}
+        ///         </code>
+        ///         <para>Code: 401 UNAUTHORIZED</para>
+        ///         <code>
+        ///             {}
+        ///         </code>
         /// </returns>
         /// <example>
         ///  call example

@@ -18,7 +18,7 @@ namespace Bajra.Utils
 
             foreach (string str in stringArrayToCompare)
             {
-                if (str.Equals(str, strCmpType))
+                if (src.Equals(str, strCmpType))
                     return true;
             }
 
