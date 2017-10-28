@@ -98,3 +98,123 @@ For example the following style of commenting can generate the 95% of the MD doc
             return r;
         }
 ```
+
+
+# Results in following mark down:
+
+
+## SaveSomeData
+----
+
+Save Some Data somewhere
+
+Test next line
+
+Test **T:AB.SampleWithApi.MyDto** 
+
+----
+
+### Controller : `BasicTestApiController`
+
+### URL : `/api/SaveSomeData`
+
+### Method : `POST`
+
+----
+
+### URL Params :
+
+* ***Required***
+ 
+    `a=[System.String]` : input of json format 
+
+
+
+* ***Optional:***
+ 
+    N/A
+
+
+### Data Params :
+
+N/A
+
+----
+
+
+### Returns : 
+
+    For fun
+
+* **Success Response:**
+  
+
+
+    When Success
+
+
+
+    ```csharp
+
+                        [{ "name": "propertyValue", "test": "propertyValue"  }]
+                    
+    ```
+
+
+
+    When Success Again
+
+
+
+    ```csharp
+
+                        [{ "name": "propertyValue", "test": "propertyValue"  }]
+                    
+    ```
+
+
+ 
+* **Error Response:**
+
+
+
+    Code: 401 UNAUTHORIZED
+
+
+
+    ```csharp
+
+                        {}
+                    
+    ```
+
+
+
+    Code: 401 UNAUTHORIZED
+
+
+
+    ```csharp
+
+                        {}
+                    
+    ```
+
+
+
+----
+
+
+### Example :
+
+    call example
+
+----
+
+
+### Extra Notes :
+
+
+my notes will be put in the first doc only
+
+
