@@ -21,10 +21,13 @@ namespace Bajra.ApiMdRunner
 
             string dllPath = Path.Combine(path, asm);
             string xmlPath = Path.Combine(path, "AB.SampleWithApi.XML");
-            
+
             MdGeneratorCore mdCore = new MdGeneratorCore(dllPath, xmlPath, AppSettings.MdOutputPath);
 
             mdCore.GenerateMDFilesForAssembly();
+
         }
+
+
     }
 }

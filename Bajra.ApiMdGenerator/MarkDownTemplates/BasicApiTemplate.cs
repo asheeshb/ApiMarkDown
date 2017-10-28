@@ -11,19 +11,19 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
         public static StringBuilder GetTemplateStringBuilder(bool isPostApi, bool hasExample)
         {
             StringBuilder sbr = new StringBuilder();
-            string templateMain = @"
-## <<<API_NAME>>>
+            string templateMain = $@"
+## {TemplateConsts.PLACEHOLDER_API_NAME}
 ----
 
-<<<ADDITIONAL_INFORMATION>>>
+{TemplateConsts.PLACEHOLDER_ADDITIONAL_INFO}
 
 ----
 
-### Controller : `<<<CONTROLLER_NAME>>>`
+### Controller : `{TemplateConsts.PLACEHOLDER_CONTROLLER_NAME}`
 
-### URL : `<<<URL>>>`
+### URL : `{TemplateConsts.PLACEHOLDER_URL}`
 
-### Method : <<<METHOD_TYPE>>>
+### Method : {TemplateConsts.PLACEHOLDER_METHOD_TYPE}
 
 ----
 
@@ -31,53 +31,50 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
 
 * ***Required***
  
-<<<PARAM_LIST_REQUIRED>>>
+{TemplateConsts.PLACEHOLDER_PARAM_LIST_REQUIRED}
 
 * ***Optional:***
  
-<<<PARAM_LIST_OPTIONAL>>>
+{TemplateConsts.PLACEHOLDER_PARAM_LIST_OPTIONAL}
 ";
             //----------------------------------------------
-            string postStr = @"
+            string postStr = $@"
 ### Data Params :
 
-<<<PARAM_FROM_BODY>>>
+{TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY}
 
 ----
 
 ";
             //----------------------------------------------
-            string strResponse = @"
+            string strResponse = $@"
 ### Returns : 
 
-<<<PARAM_GENERIC_RETURN>>>
+{TemplateConsts.PLACEHOLDER_RETURN_GENERIC_RESPONSE}
 
 * **Success Response:**
   
-<<<PARAM_IF_SUCCESS_DEFINED>>>
+{TemplateConsts.PLACEHOLDER_SUCCESS_RESPONSE}
  
 * **Error Response:**
 
-<<<PARAM_IF_FAILED_DEFINED>>>
+{TemplateConsts.PLACEHOLDER_FAIL_RESPONSE}
 
 ----
 
 ";
             //----------------------------------------------
-            string strExample = @"
+            string strExample = $@"
 ### Example :
 
-<<<EXAMPLE>>>
+{TemplateConsts.PLACEHOLDER_EXAMPLE}
 
 ----
 
+
 ";
             //----------------------------------------------
-            string strNotes = @"
-### Extra Notes :
-
-<<<NOTES>>>
-";
+            string strNotes = $"{TemplateConsts.NOTE_SIGNATURE}<<<NOTES>>>\r\n";
             //----------------------------------------------
 
             sbr.Append(templateMain);

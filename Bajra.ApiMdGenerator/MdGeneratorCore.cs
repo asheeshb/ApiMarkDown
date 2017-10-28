@@ -17,16 +17,24 @@ namespace Bajra.ApiMdGenerator
         private string DllFullFilePath { get; set; }
         private string XmlFullFilePath { get; set; }
         private string SavePath { get; set; }
+        private string OldMdPath { get; set; }
 
         private string _mdFileCache = "";
 
         const string PADDING_PARAM = "    ";
 
-        public MdGeneratorCore(string dllFullFilePath, string xmlFullFilePath, string mdOutputPath)
+        public MdGeneratorCore(string dllFullFilePath, string xmlFullFilePath, string mdOutputPath, string oldMdLocationPath = null)
         {
             DllFullFilePath = dllFullFilePath;
             XmlFullFilePath = xmlFullFilePath;
             SavePath = mdOutputPath;
+            OldMdPath = oldMdLocationPath;
+
+            if (OldMdPath == null)
+                OldMdPath = mdOutputPath;
+            
+            if (!Directory.Exists(OldMdPath))
+                OldMdPath = null;
         }
 
         public DirectoryInfo GenerateMDFilesForAssembly()
@@ -35,20 +43,16 @@ namespace Bajra.ApiMdGenerator
 
             string finalFolderPath = Path.Combine(this.SavePath, GetFolderPathWithCurrentTimeStamp());
 
-            DirectoryInfo dirInfo = null;
+            string possibleOldPath = TryGettingLastGeneratedFolderPath(this.OldMdPath);
 
-            if (!Directory.Exists(finalFolderPath))
-                dirInfo = Directory.CreateDirectory(finalFolderPath);
-            else
-                dirInfo = new DirectoryInfo(finalFolderPath);
+            DirectoryInfo dirInfo = (!Directory.Exists(finalFolderPath)) ? Directory.CreateDirectory(finalFolderPath) : new DirectoryInfo(finalFolderPath);
 
-            this.GenerateMD(apiControllerList, finalFolderPath, this.XmlFullFilePath);
+            this.GenerateMD(apiControllerList, finalFolderPath, this.XmlFullFilePath, possibleOldPath);
 
             return dirInfo;
         }
 
-
-        private void GenerateMD(List<ApiControllerObj> apiControllerList, string savePath, string xmlPath)
+        private void GenerateMD(List<ApiControllerObj> apiControllerList, string savePath, string xmlPath, string oldMdPathHint)
         {
             XmlCommentHelper xmlCommentHelper = null;//isXmlExist = false;
 
@@ -61,8 +65,18 @@ namespace Bajra.ApiMdGenerator
 
                 string subControllerFolderPath = Path.Combine(savePath, folderName);
 
+                string subControllerFolderPath_Old = null;
+
                 if (!Directory.Exists(subControllerFolderPath))
                     Directory.CreateDirectory(subControllerFolderPath);
+
+                if (oldMdPathHint != null)
+                {
+                    subControllerFolderPath_Old = Path.Combine(oldMdPathHint, folderName);
+
+                    if (!Directory.Exists(subControllerFolderPath_Old))
+                        subControllerFolderPath_Old = null;
+                }
 
                 foreach (ApiMethodObj methodItem in controllerItem.MethodArray)
                 {
@@ -72,8 +86,8 @@ namespace Bajra.ApiMdGenerator
 
                     StringBuilder sbr_mdFileForMethod = BasicApiTemplate.GetTemplateStringBuilder(hasPostApi, false);
 
-                    sbr_mdFileForMethod.Replace(TemplateConsts.API_NAME, methodItem.MethodName);
-                    sbr_mdFileForMethod.Replace(TemplateConsts.CONTROLLER_NAME, methodItem.ControllerName);
+                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_API_NAME, methodItem.MethodName);
+                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_CONTROLLER_NAME, methodItem.ControllerName);
 
                     StringBuilder sbr_RequiredParams = new StringBuilder();
                     StringBuilder sbr_OptionalParams = new StringBuilder();
@@ -83,11 +97,11 @@ namespace Bajra.ApiMdGenerator
                     if (xmlCommentHelper != null)
                         xmlMethodObj = xmlCommentHelper.GetMemberDefinition(methodItem);
 
-                    sbr_mdFileForMethod.Replace(TemplateConsts.ADDITIONAL_INFORMATION, xmlMethodObj?.Summary);
+                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_ADDITIONAL_INFO, xmlMethodObj?.Summary);
 
-                    sbr_mdFileForMethod.Replace(TemplateConsts.URL, "/api/" + methodItem.MethodName.Replace("Controller", ""));
+                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_URL, "/api/" + methodItem.MethodName.Replace("Controller", ""));
 
-                    sbr_mdFileForMethod.Replace(TemplateConsts.METHOD_TYPE, methodTypes);
+                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_METHOD_TYPE, methodTypes);
 
                     foreach (var paramItem in methodItem.ParameterArray)
                     {
@@ -96,7 +110,7 @@ namespace Bajra.ApiMdGenerator
                         //TODO:  Handle IsFromBody
                         if (paramItem.IsFromBody)
                         {
-                            sbr_mdFileForMethod.Replace(TemplateConsts.PARAM_FROM_BODY, paramDesc);
+                            sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, paramDesc);
                         }
                         else
                         {
@@ -113,61 +127,73 @@ namespace Bajra.ApiMdGenerator
                     if (sbr_RequiredParams.Length == 0)
                         sbr_RequiredParams.AppendLine(PADDING_PARAM + "N/A");
 
-                    sbr_mdFileForMethod.Replace(TemplateConsts.PARAM_LIST_REQUIRED, sbr_RequiredParams.ToString());
+                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_LIST_REQUIRED, sbr_RequiredParams.ToString());
 
-                    sbr_mdFileForMethod.Replace(TemplateConsts.PARAM_LIST_OPTIONAL, sbr_OptionalParams.ToString());
-                    
+                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_LIST_OPTIONAL, sbr_OptionalParams.ToString());
+
 
                     if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.Example))
-                        sbr_mdFileForMethod.Replace(TemplateConsts.EXAMPLE, xmlMethodObj.Example);
+                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_EXAMPLE, xmlMethodObj.Example);
                     else
-                        sbr_mdFileForMethod.Replace(TemplateConsts.EXAMPLE, TemplateConsts.TEXT_NONE);
+                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_EXAMPLE, TemplateConsts.TEXT_NONE);
 
                     if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.Returns))
-                        sbr_mdFileForMethod.Replace(TemplateConsts.RETURN_GENERIC_RESPONSE, xmlMethodObj.Returns);
+                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_RETURN_GENERIC_RESPONSE, xmlMethodObj.Returns);
                     else
-                        sbr_mdFileForMethod.Replace(TemplateConsts.RETURN_GENERIC_RESPONSE, TemplateConsts.TEXT_NONE);
+                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_RETURN_GENERIC_RESPONSE, TemplateConsts.TEXT_NONE);
 
 
                     if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.Returns_WithSuccess))
-                        sbr_mdFileForMethod.Replace(TemplateConsts.SUCCESS_RESPONSE, xmlMethodObj.Returns_WithSuccess);
+                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_SUCCESS_RESPONSE, xmlMethodObj.Returns_WithSuccess);
                     else
-                        sbr_mdFileForMethod.Replace(TemplateConsts.SUCCESS_RESPONSE, TemplateConsts.TEXT_NONE);
+                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_SUCCESS_RESPONSE, TemplateConsts.TEXT_NONE);
 
 
                     if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.Returns_WithFail))
-                        sbr_mdFileForMethod.Replace(TemplateConsts.FAIL_RESPONSE, xmlMethodObj.Returns_WithFail);
+                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_FAIL_RESPONSE, xmlMethodObj.Returns_WithFail);
                     else
-                        sbr_mdFileForMethod.Replace(TemplateConsts.FAIL_RESPONSE, TemplateConsts.TEXT_NONE);
+                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_FAIL_RESPONSE, TemplateConsts.TEXT_NONE);
 
                     if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.DatasParamFromBody))
-                        sbr_mdFileForMethod.Replace(TemplateConsts.PARAM_FROM_BODY, xmlMethodObj.DatasParamFromBody);
+                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, xmlMethodObj.DatasParamFromBody);
                     else
-                        sbr_mdFileForMethod.Replace(TemplateConsts.PARAM_FROM_BODY, TemplateConsts.TEXT_NONE);
-
-                    //TODO:Handle for notes
-
+                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, TemplateConsts.TEXT_NONE);
 
                     string fileNameOnly = GetValidFileName(methodItem.MethodName);
 
-                    this.CreateMD_File(fileNameOnly, subControllerFolderPath, sbr_mdFileForMethod);
+                    this.CreateMD_File_UsingOldNotes_IfApplicable(fileNameOnly, subControllerFolderPath, subControllerFolderPath_Old, sbr_mdFileForMethod);
                 }
             }
         }
 
 
-        private void CreateMD_File(string fileNameOnly, string subControllerFolderPath, StringBuilder sbr_mdFileForMethod)
+        private void CreateMD_File_UsingOldNotes_IfApplicable(string fileNameOnly, string subControllerFolderPath, string subControllerFolderPath_Old, StringBuilder sbr_mdFileForMethod)
         {
             string mdFileName = fileNameOnly + ".md";
-
             string fullMdFileAndPath = Path.Combine(subControllerFolderPath, mdFileName);
+
             int ctr = 1;
+
+            string tempFileName = fileNameOnly;
 
             while (File.Exists(fullMdFileAndPath))
             {
-                string tempFileName = string.Format("{0}({1})", fileNameOnly, ctr++);
+                tempFileName = string.Format("{0}({1})", fileNameOnly, ctr++);
                 fullMdFileAndPath = Path.Combine(subControllerFolderPath, tempFileName + ".md");
             }
+
+            string noteSection = string.Empty;
+            string fullMdFileAndPath_old = null;
+
+            if (subControllerFolderPath_Old != null)
+            {
+                fullMdFileAndPath_old = Path.Combine(subControllerFolderPath_Old, tempFileName + ".md");
+
+                //extract the notes from file if old file exist
+                noteSection = TryGettingNoteSectionFromOldMdFile(fullMdFileAndPath_old);
+            }
+
+            sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_NOTES, noteSection);
 
             File.WriteAllText(fullMdFileAndPath, sbr_mdFileForMethod.ToString());
         }
@@ -202,6 +228,54 @@ namespace Bajra.ApiMdGenerator
             }
 
             return currentName;
+        }
+
+        private static string TryGettingLastGeneratedFolderPath(string oldMdPathHint)
+        {
+            if (!string.IsNullOrEmpty(oldMdPathHint))
+            {
+                //List<Tuple<string, DateTime>> viableDirectoryNames = new List<Tuple<string, DateTime>>();
+
+                Tuple<string, DateTime> latestFolder = null;
+
+                foreach (var dirPath in Directory.EnumerateDirectories(oldMdPathHint))
+                {
+                    string directoryName = Path.GetFileName(dirPath);
+                    if (directoryName.StartsWith("MarkDown_", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        DateTime dt = Directory.GetCreationTime(dirPath);
+
+                        var curDirItem = Tuple.Create(dirPath, dt);
+
+                        //viableDirectoryNames.Add(curDirItem);
+
+                        if (latestFolder == null || curDirItem.Item2 > latestFolder.Item2)
+                            latestFolder = curDirItem;
+                    }
+                }
+
+                if (latestFolder != null)
+                    return latestFolder.Item1;
+            }
+
+            return null;
+        }
+
+        private string TryGettingNoteSectionFromOldMdFile(string oldMdfullPathAndFileName)
+        {
+            string noteText = string.Empty;
+
+            if (!File.Exists(oldMdfullPathAndFileName))
+                return noteText;
+
+            string oldFileInMem = File.ReadAllText(oldMdfullPathAndFileName);
+
+            int i = oldFileInMem.IndexOf(TemplateConsts.NOTE_SIGNATURE);
+
+            if (i > 0 )//&& oldFileInMem.Length > (i + TemplateConsts.NOTE_SIGNATURE.Length + 1))
+                noteText = oldFileInMem.Substring(i + TemplateConsts.NOTE_SIGNATURE.Length);
+
+            return noteText;
         }
     }
 }
