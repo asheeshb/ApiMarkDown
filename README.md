@@ -9,6 +9,7 @@ Features:-
 * Each generation creates a new version of MD files organized by folders based on the ApiControllers.
 * Supports for overridden methods.
 * Support for reuse of manually added text in the generated MD file to get inserted within the next MD generation cycle. *However this is supported for the *Note* section only*.
+* Read the FromBody attribute or automatically figure it out if it is a custom type and it is the only param.
 
 
 **Prerequisite**:
@@ -45,6 +46,13 @@ this can be configured in App.config
 The project reference for **System.Web.Http** must match the version that is reference within the .NET assembly for which the MD files are to be generated.
 
 If required remove the existing **System.Web.Http** reference and point to any specific version of the same DLL.
+
+# TODO:
+
+* Support custom logo and date of generation optionally
+* Support generation of TOC.MD (table of content)
+* Support generation of node/ASP.NET site out of box.
+* Write unit test
 
 # References:
 

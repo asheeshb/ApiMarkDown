@@ -14,9 +14,9 @@ namespace Bajra.ApiMdGenerator
         public string MethodName { get; set; }
         public Type ReturnType { get; set; }
 
-        public HttpMethod[] SupportedHttpMethodArray { get; set; }
+        public List<HttpMethod> SupportedHttpMethodArray { get; private set; } = new List<HttpMethod>();
 
-        public ApiMethodParamObj[] ParameterArray { get; set; }
+        public List<ApiMethodParamObj> ParameterArray { get; private set; } = new List<ApiMethodParamObj>();
 
         public string MethodDescription { get; set; }
         

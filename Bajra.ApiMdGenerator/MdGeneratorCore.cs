@@ -32,7 +32,7 @@ namespace Bajra.ApiMdGenerator
 
             if (OldMdPath == null)
                 OldMdPath = mdOutputPath;
-            
+
             if (!Directory.Exists(OldMdPath))
                 OldMdPath = null;
         }
@@ -107,11 +107,8 @@ namespace Bajra.ApiMdGenerator
                     {
                         string paramDesc = xmlMethodObj?.ParamList.FirstOrDefault(t => t.Name == paramItem.ParamName)?.Value ?? "";
 
-                        //TODO:  Handle IsFromBody
                         if (paramItem.IsFromBody)
-                        {
-                            sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, paramDesc);
-                        }
+                            sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, string.Format(PADDING_PARAM + "`{0}=[{1}]` : {2}\r\n", paramItem.ParamName, paramItem.ParamTypeName, paramDesc));
                         else
                         {
                             var refSbr = (paramItem.IsOptional) ? sbr_OptionalParams : sbr_RequiredParams;
@@ -198,15 +195,15 @@ namespace Bajra.ApiMdGenerator
             File.WriteAllText(fullMdFileAndPath, sbr_mdFileForMethod.ToString());
         }
 
-        private string GetMethodType(HttpMethod[] supportedHttpMethods)
+        private string GetMethodType(List<HttpMethod> supportedHttpMethods)
         {
             StringBuilder sbr = new StringBuilder();
 
-            for (int i = 0; i < supportedHttpMethods.Length; i++)
+            for (int i = 0; i < supportedHttpMethods.Count; i++)
             {
                 HttpMethod httpMethodItem = supportedHttpMethods[i];
                 sbr.AppendFormat("`{0}`", httpMethodItem.Method.ToUpper());
-                if (i != supportedHttpMethods.Length - 1)
+                if (i != supportedHttpMethods.Count - 1)
                 {
                     sbr.Append(" | ");
                 }
@@ -272,7 +269,7 @@ namespace Bajra.ApiMdGenerator
 
             int i = oldFileInMem.IndexOf(TemplateConsts.NOTE_SIGNATURE);
 
-            if (i > 0 )//&& oldFileInMem.Length > (i + TemplateConsts.NOTE_SIGNATURE.Length + 1))
+            if (i > 0)//&& oldFileInMem.Length > (i + TemplateConsts.NOTE_SIGNATURE.Length + 1))
                 noteText = oldFileInMem.Substring(i + TemplateConsts.NOTE_SIGNATURE.Length);
 
             return noteText;

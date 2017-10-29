@@ -57,12 +57,12 @@ namespace Bajra.ApiMdGenerator
                 parametersSignature += p.ParamTypeName + ",";
             }
 
-            if (methodObj.ParameterArray.Length > 0)
+            if (methodObj.ParameterArray.Count > 0)
                 parametersSignature = parametersSignature.Remove(parametersSignature.Length - 1, 1);
 
             parametersSignature += ")";
 
-            if (methodObj.ParameterArray.Length == 0)
+            if (methodObj.ParameterArray.Count == 0)
                 parametersSignature = "";
 
             var keyToLookfor = string.Format("M:{0}{1}", methodObj.FullMethodName, parametersSignature);
