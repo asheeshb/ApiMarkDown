@@ -11,6 +11,7 @@ using System.Web.Http.Controllers;
 using System.Runtime.CompilerServices;
 using MicrosoftStuff;
 using System.Web.Http;
+using System.Diagnostics;
 
 namespace Bajra.ApiMdGenerator
 {
@@ -28,6 +29,13 @@ namespace Bajra.ApiMdGenerator
               || type.IsEnum
               || type.Equals(typeof(string))
               || type.Equals(typeof(decimal));
+        }
+
+        public static string GetVersion(string assemblyPath)
+        {
+            FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo(assemblyPath);
+
+            return myFileVersionInfo.FileVersion;
         }
 
         public static List<ApiControllerObj> GetApiControllerListForAssembly(string assemblyPath, string xmlPath = null)

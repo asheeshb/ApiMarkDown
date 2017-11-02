@@ -8,11 +8,21 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
 {
     class BasicApiTemplate
     {
-        public static StringBuilder GetTemplateStringBuilder(bool isPostApi, bool hasExample)
+        public static StringBuilder GetTemplateStringBuilder(bool isPostApi, bool hasExample, string dateTimeStamp, string versionText, string imagePath = "")
         {
-            StringBuilder sbr = new StringBuilder();
+
+            string imgLogo = $@"
+
+ ![Alt text]({imagePath})
+
+";
+
             string templateMain = $@"
-## {TemplateConsts.PLACEHOLDER_API_NAME}
+# {TemplateConsts.PLACEHOLDER_API_NAME}
+
+* **Documentation Generated On** : {dateTimeStamp}
+* **Version** : {versionText}     
+
 ----
 
 {TemplateConsts.PLACEHOLDER_ADDITIONAL_INFO}
@@ -77,7 +87,13 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
             string strNotes = $"{TemplateConsts.NOTE_SIGNATURE}<<<NOTES>>>\r\n";
             //----------------------------------------------
 
+            StringBuilder sbr = new StringBuilder();
+
+            if (!string.IsNullOrEmpty(imagePath))
+                sbr.Append(imagePath);
+
             sbr.Append(templateMain);
+
             if (isPostApi)
                 sbr.Append(postStr);
 

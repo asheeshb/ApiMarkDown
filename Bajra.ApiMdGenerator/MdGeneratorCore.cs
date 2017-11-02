@@ -19,22 +19,35 @@ namespace Bajra.ApiMdGenerator
         private string SavePath { get; set; }
         private string OldMdPath { get; set; }
 
+        private string ImagePath { get; set; }
+        private string VersionInfo { get; set; }
+
         private string _mdFileCache = "";
 
         const string PADDING_PARAM = "    ";
 
-        public MdGeneratorCore(string dllFullFilePath, string xmlFullFilePath, string mdOutputPath, string oldMdLocationPath = null)
+        public MdGeneratorCore(string dllFullFilePath, string xmlFullFilePath, string mdOutputPath, string oldMdLocationPath = null, string imagePath = "")
         {
             DllFullFilePath = dllFullFilePath;
             XmlFullFilePath = xmlFullFilePath;
             SavePath = mdOutputPath;
             OldMdPath = oldMdLocationPath;
+            ImagePath = imagePath;
 
             if (OldMdPath == null)
                 OldMdPath = mdOutputPath;
 
             if (!Directory.Exists(OldMdPath))
                 OldMdPath = null;
+
+            try
+            {
+                this.VersionInfo = AssemblyAnalyzer.GetVersion(this.DllFullFilePath);
+            }
+            catch
+            {
+
+            }
         }
 
         public DirectoryInfo GenerateMDFilesForAssembly()
@@ -54,6 +67,7 @@ namespace Bajra.ApiMdGenerator
 
         private void GenerateMD(List<ApiControllerObj> apiControllerList, string savePath, string xmlPath, string oldMdPathHint)
         {
+            string dateTimeString = DateTime.Now.ToString("yyyy/MM/dd H:mm:ss");
             XmlCommentHelper xmlCommentHelper = null;//isXmlExist = false;
 
             if (!string.IsNullOrEmpty(xmlPath) && File.Exists(xmlPath))
@@ -84,7 +98,7 @@ namespace Bajra.ApiMdGenerator
 
                     bool hasPostApi = methodTypes.Contains("POST");
 
-                    StringBuilder sbr_mdFileForMethod = BasicApiTemplate.GetTemplateStringBuilder(hasPostApi, false);
+                    StringBuilder sbr_mdFileForMethod = BasicApiTemplate.GetTemplateStringBuilder(hasPostApi, false, dateTimeString, this.VersionInfo, this.ImagePath );
 
                     sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_API_NAME, methodItem.MethodName);
                     sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_CONTROLLER_NAME, methodItem.ControllerName);
