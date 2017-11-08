@@ -52,7 +52,7 @@ namespace Bajra.ApiMdGenerator
 
         public DirectoryInfo GenerateMDFilesForAssembly()
         {
-            List<ApiControllerObj> apiControllerList = AssemblyAnalyzer.GetApiControllerListForAssembly(this.DllFullFilePath);
+            List<ApiControllerObj> apiControllerList = AssemblyAnalyzer.GetApiControllerListForAssembly(this.DllFullFilePath).ToList();
 
             string finalFolderPath = Path.Combine(this.SavePath, GetFolderPathWithCurrentTimeStamp());
 
@@ -98,7 +98,7 @@ namespace Bajra.ApiMdGenerator
 
                     bool hasPostApi = methodTypes.Contains("POST");
 
-                    StringBuilder sbr_mdFileForMethod = BasicApiTemplate.GetTemplateStringBuilder(hasPostApi, false, dateTimeString, this.VersionInfo, this.ImagePath );
+                    StringBuilder sbr_mdFileForMethod = BasicApiTemplate.GetTemplateStringBuilder(hasPostApi, false, dateTimeString, this.VersionInfo, this.ImagePath);
 
                     sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_API_NAME, methodItem.MethodName);
                     sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_CONTROLLER_NAME, methodItem.ControllerName);
@@ -111,6 +111,9 @@ namespace Bajra.ApiMdGenerator
                     if (xmlCommentHelper != null)
                         xmlMethodObj = xmlCommentHelper.GetMemberDefinition(methodItem);
 
+                    if (xmlMethodObj == null || string.IsNullOrWhiteSpace(xmlMethodObj.Returns) || string.IsNullOrWhiteSpace(xmlMethodObj.Summary))
+                        methodItem.IsCommentingMissing = true;
+                    
                     sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_ADDITIONAL_INFO, xmlMethodObj?.Summary);
 
                     sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_URL, "/api/" + methodItem.MethodName.Replace("Controller", ""));
@@ -172,13 +175,17 @@ namespace Bajra.ApiMdGenerator
 
                     string fileNameOnly = GetValidFileName(methodItem.MethodName);
 
-                    this.CreateMD_File_UsingOldNotes_IfApplicable(fileNameOnly, subControllerFolderPath, subControllerFolderPath_Old, sbr_mdFileForMethod);
+                    methodItem.MDFileNameWithoutExtension = this.CreateMD_File_UsingOldNotes_IfApplicable(fileNameOnly, subControllerFolderPath, subControllerFolderPath_Old, sbr_mdFileForMethod);
                 }
             }
+
+            string assemblyName = Path.GetFileName(DllFullFilePath);
+
+            MdIndexGenerator gen = new MdIndexGenerator(savePath, apiControllerList, VersionInfo, assemblyName, this. ImagePath, true);
         }
 
 
-        private void CreateMD_File_UsingOldNotes_IfApplicable(string fileNameOnly, string subControllerFolderPath, string subControllerFolderPath_Old, StringBuilder sbr_mdFileForMethod)
+        private string CreateMD_File_UsingOldNotes_IfApplicable(string fileNameOnly, string subControllerFolderPath, string subControllerFolderPath_Old, StringBuilder sbr_mdFileForMethod)
         {
             string mdFileName = fileNameOnly + ".md";
             string fullMdFileAndPath = Path.Combine(subControllerFolderPath, mdFileName);
@@ -207,6 +214,8 @@ namespace Bajra.ApiMdGenerator
             sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_NOTES, noteSection);
 
             File.WriteAllText(fullMdFileAndPath, sbr_mdFileForMethod.ToString());
+
+            return tempFileName;
         }
 
         private string GetMethodType(List<HttpMethod> supportedHttpMethods)

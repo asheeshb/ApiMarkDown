@@ -34,17 +34,17 @@ namespace Bajra.ApiMdGenerator
         public static string GetVersion(string assemblyPath)
         {
             FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo(assemblyPath);
-
+            
             return myFileVersionInfo.FileVersion;
         }
 
-        public static List<ApiControllerObj> GetApiControllerListForAssembly(string assemblyPath, string xmlPath = null)
+        public static IEnumerable<ApiControllerObj> GetApiControllerListForAssembly(string assemblyPath, string xmlPath = null)
         {
             Assembly asm = Assembly.LoadFile(assemblyPath);
 
-            Type[] t = asm.GetTypes();
+            Type[] asmType = asm.GetTypes();
 
-            List<Type> controllerTypeList = t.Where(type => type.IsSubclassOf(typeof(ApiController))).ToList();
+            List<Type> controllerTypeList = asmType.Where(type => type.IsSubclassOf(typeof(ApiController))).ToList();
 
             List<ApiControllerObj> controllers = new List<ApiControllerObj>();
 
@@ -58,12 +58,12 @@ namespace Bajra.ApiMdGenerator
                     {
                         ControllerName = controllerItem.Name,
                         ControllerNamespace = controllerItem.Namespace,
-                        MethodArray = apiMethods.ToArray()
+                        MethodArray = apiMethods.ToList()
                     });
                 }
             }
 
-            return controllers;
+            return controllers.OrderBy(t=> t.ControllerNamespace).ThenBy(t => t.ControllerName);
         }
 
         private static List<ApiMethodObj> ProcessApiMethods(Type controllerItem)

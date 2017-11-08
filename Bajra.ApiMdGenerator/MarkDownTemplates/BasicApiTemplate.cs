@@ -13,7 +13,7 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
 
             string imgLogo = $@"
 
- ![Alt text]({imagePath})
+ ![Company Logo here]({imagePath})
 
 ";
 
@@ -21,7 +21,7 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
 # {TemplateConsts.PLACEHOLDER_API_NAME}
 
 * **Documentation Generated On** : {dateTimeStamp}
-* **Version** : {versionText}     
+* **DLL Version** : {versionText}     
 
 ----
 

@@ -26,4 +26,12 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
 
         public const string NOTE_SIGNATURE = "### Extra Notes :\r\n";
     }
+
+    class TemplateIndexConsts
+    {
+        public const string PLACEHOLDER_ASSEMBLY_NAME = "<<<ASSEMBLY_NAME>>>";
+
+        public const string PLACEHOLDER_MASTER_INDEX_BLOCK = "<<<PLACEHOLDER_MASTER_INDEX_BLOCK>>>";
+        public const string PLACEHOLDER_MASTER_NAMESPACED_BLOCK = "<<<PLACEHOLDER_PLACEHOLDER_MASTER_NAMESPACED_BLOCK>>>";
+    }
 }

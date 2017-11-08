@@ -19,7 +19,14 @@ namespace Bajra.ApiMdGenerator
         public List<ApiMethodParamObj> ParameterArray { get; private set; } = new List<ApiMethodParamObj>();
 
         public string MethodDescription { get; set; }
-        
+
+        //these two are generated when files are created
+        public string MDFileNameWithoutExtension { get; set; }
+        public bool IsCommentingMissing { get; set; }
+
+        //TODO :make use of this
+        public string MethodSignature { get; set; }
+
         public override string ToString()
         {
             return ControllerName + "." + MethodName;

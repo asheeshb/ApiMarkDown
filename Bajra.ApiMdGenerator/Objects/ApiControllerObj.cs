@@ -15,7 +15,7 @@ namespace Bajra.ApiMdGenerator
         public bool IsSecured { get; set; }
         public bool IsSessionEnabled { get; set; }
 
-        public ApiMethodObj[] MethodArray { get; set; }
+        public List<ApiMethodObj> MethodArray { get; set; }
 
         public override string ToString()
         {

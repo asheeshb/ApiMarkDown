@@ -53,6 +53,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MdIndexGenerator.cs" />
+    <Compile Include="MarkDownTemplates\IndexApiTemplate.cs" />
     <Compile Include="MarkDownTemplates\BasicApiTemplate.cs" />
     <Compile Include="MdGeneratorCore.cs" />
     <Compile Include="MarkDownTemplates\TemplateConsts.cs" />
@@ -68,6 +70,9 @@
     <Compile Include="XmlObjects\ParamXmlElement.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="MarkDownTemplates\Resource\IndexApiTemplate.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="MarkDownTemplates\Resource\BasicApiTemplate.md">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
