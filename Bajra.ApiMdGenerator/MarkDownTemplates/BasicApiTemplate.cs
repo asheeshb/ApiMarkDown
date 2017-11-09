@@ -90,7 +90,7 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
             StringBuilder sbr = new StringBuilder();
 
             if (!string.IsNullOrEmpty(imagePath))
-                sbr.Append(imagePath);
+                sbr.Append(imgLogo);
 
             sbr.Append(templateMain);
 

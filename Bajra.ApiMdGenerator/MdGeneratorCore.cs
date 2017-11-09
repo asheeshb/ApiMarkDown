@@ -26,6 +26,8 @@ namespace Bajra.ApiMdGenerator
 
         const string PADDING_PARAM = "    ";
 
+        private AssemblyAnalyzer AssemblyAnalyzerRef { get; set; }
+
         public MdGeneratorCore(string dllFullFilePath, string xmlFullFilePath, string mdOutputPath, string oldMdLocationPath = null, string imagePath = "")
         {
             DllFullFilePath = dllFullFilePath;
@@ -33,6 +35,8 @@ namespace Bajra.ApiMdGenerator
             SavePath = mdOutputPath;
             OldMdPath = oldMdLocationPath;
             ImagePath = imagePath;
+
+            AssemblyAnalyzerRef = new AssemblyAnalyzer();
 
             if (OldMdPath == null)
                 OldMdPath = mdOutputPath;
@@ -42,7 +46,7 @@ namespace Bajra.ApiMdGenerator
 
             try
             {
-                this.VersionInfo = AssemblyAnalyzer.GetVersion(this.DllFullFilePath);
+                this.VersionInfo = AssemblyAnalyzerRef.GetVersion(this.DllFullFilePath);
             }
             catch
             {
@@ -52,7 +56,8 @@ namespace Bajra.ApiMdGenerator
 
         public DirectoryInfo GenerateMDFilesForAssembly()
         {
-            List<ApiControllerObj> apiControllerList = AssemblyAnalyzer.GetApiControllerListForAssembly(this.DllFullFilePath).ToList();
+
+            List<ApiControllerObj> apiControllerList = AssemblyAnalyzerRef.GetApiControllerListForAssembly(this.DllFullFilePath).ToList();
 
             string finalFolderPath = Path.Combine(this.SavePath, GetFolderPathWithCurrentTimeStamp());
 
@@ -92,99 +97,53 @@ namespace Bajra.ApiMdGenerator
                         subControllerFolderPath_Old = null;
                 }
 
-                foreach (ApiMethodObj methodItem in controllerItem.MethodArray)
-                {
-                    string methodTypes = GetMethodType(methodItem.SupportedHttpMethodArray);
-
-                    bool hasPostApi = methodTypes.Contains("POST");
-
-                    StringBuilder sbr_mdFileForMethod = BasicApiTemplate.GetTemplateStringBuilder(hasPostApi, false, dateTimeString, this.VersionInfo, this.ImagePath);
-
-                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_API_NAME, methodItem.MethodName);
-                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_CONTROLLER_NAME, methodItem.ControllerName);
-
-                    StringBuilder sbr_RequiredParams = new StringBuilder();
-                    StringBuilder sbr_OptionalParams = new StringBuilder();
-
-                    MethodXmlElement xmlMethodObj = null;
-
-                    if (xmlCommentHelper != null)
-                        xmlMethodObj = xmlCommentHelper.GetMemberDefinition(methodItem);
-
-                    if (xmlMethodObj == null || string.IsNullOrWhiteSpace(xmlMethodObj.Returns) || string.IsNullOrWhiteSpace(xmlMethodObj.Summary))
-                        methodItem.IsCommentingMissing = true;
-                    
-                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_ADDITIONAL_INFO, xmlMethodObj?.Summary);
-
-                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_URL, "/api/" + methodItem.MethodName.Replace("Controller", ""));
-
-                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_METHOD_TYPE, methodTypes);
-
-                    foreach (var paramItem in methodItem.ParameterArray)
-                    {
-                        string paramDesc = xmlMethodObj?.ParamList.FirstOrDefault(t => t.Name == paramItem.ParamName)?.Value ?? "";
-
-                        if (paramItem.IsFromBody)
-                            sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, string.Format(PADDING_PARAM + "`{0}=[{1}]` : {2}\r\n", paramItem.ParamName, paramItem.ParamTypeName, paramDesc));
-                        else
-                        {
-                            var refSbr = (paramItem.IsOptional) ? sbr_OptionalParams : sbr_RequiredParams;
-
-                            refSbr.AppendFormat(PADDING_PARAM + "`{0}=[{1}]` : {2}\r\n", paramItem.ParamName, paramItem.ParamTypeName, paramDesc);
-                            refSbr.AppendLine();
-                        }
-                    }
-
-                    if (sbr_OptionalParams.Length == 0)
-                        sbr_OptionalParams.AppendLine(PADDING_PARAM + "N/A");
-
-                    if (sbr_RequiredParams.Length == 0)
-                        sbr_RequiredParams.AppendLine(PADDING_PARAM + "N/A");
-
-                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_LIST_REQUIRED, sbr_RequiredParams.ToString());
-
-                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_LIST_OPTIONAL, sbr_OptionalParams.ToString());
-
-
-                    if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.Example))
-                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_EXAMPLE, xmlMethodObj.Example);
-                    else
-                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_EXAMPLE, TemplateConsts.TEXT_NONE);
-
-                    if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.Returns))
-                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_RETURN_GENERIC_RESPONSE, xmlMethodObj.Returns);
-                    else
-                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_RETURN_GENERIC_RESPONSE, TemplateConsts.TEXT_NONE);
-
-
-                    if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.Returns_WithSuccess))
-                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_SUCCESS_RESPONSE, xmlMethodObj.Returns_WithSuccess);
-                    else
-                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_SUCCESS_RESPONSE, TemplateConsts.TEXT_NONE);
-
-
-                    if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.Returns_WithFail))
-                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_FAIL_RESPONSE, xmlMethodObj.Returns_WithFail);
-                    else
-                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_FAIL_RESPONSE, TemplateConsts.TEXT_NONE);
-
-                    if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.DatasParamFromBody))
-                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, xmlMethodObj.DatasParamFromBody);
-                    else
-                        sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, TemplateConsts.TEXT_NONE);
-
-                    string fileNameOnly = GetValidFileName(methodItem.MethodName);
-
-                    methodItem.MDFileNameWithoutExtension = this.CreateMD_File_UsingOldNotes_IfApplicable(fileNameOnly, subControllerFolderPath, subControllerFolderPath_Old, sbr_mdFileForMethod);
-                }
+                this.Process_ApiMethodObj(controllerItem, xmlCommentHelper, dateTimeString, subControllerFolderPath, subControllerFolderPath_Old);
             }
 
             string assemblyName = Path.GetFileName(DllFullFilePath);
 
-            MdIndexGenerator gen = new MdIndexGenerator(savePath, apiControllerList, VersionInfo, assemblyName, this. ImagePath, true);
+            MdIndexGenerator gen = new MdIndexGenerator(savePath, apiControllerList, VersionInfo, assemblyName, this.ImagePath, true);
         }
 
+        private void Process_ApiMethodObj(ApiControllerObj controllerItem, XmlCommentHelper xmlCommentHelper, string dateTimeString, string subControllerFolderPath, string subControllerFolderPath_Old)
+        {
+            foreach (ApiMethodObj methodItem in controllerItem.MethodArray)
+            {
+                string methodTypes = GetMethodType(methodItem.SupportedHttpMethodArray);
 
+                bool hasPostApi = methodTypes.Contains("POST");
+
+                StringBuilder sbr_mdFileForMethod = BasicApiTemplate.GetTemplateStringBuilder(hasPostApi, false, dateTimeString, this.VersionInfo, this.ImagePath);
+
+                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_API_NAME, methodItem.MethodName);
+                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_CONTROLLER_NAME, methodItem.ControllerName);
+
+                MethodXmlElement xmlMethodObj = null;
+
+                if (xmlCommentHelper != null)
+                    xmlMethodObj = xmlCommentHelper.GetMemberDefinition(methodItem);
+
+                if (xmlMethodObj == null || string.IsNullOrWhiteSpace(xmlMethodObj.Returns) || string.IsNullOrWhiteSpace(xmlMethodObj.Summary))
+                    methodItem.IsCommentingMissing = true;
+
+                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_ADDITIONAL_INFO, xmlMethodObj?.Summary);
+
+                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_URL, "/api/" + methodItem.MethodName.Replace("Controller", ""));
+
+                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_METHOD_TYPE, methodTypes);
+
+                this.SetTemplateData_MethodParameters(methodItem, xmlMethodObj, ref sbr_mdFileForMethod);
+
+                this.SetTemplateData_Example(methodItem, xmlMethodObj, ref sbr_mdFileForMethod);
+
+                this.SetTemplateData_ReturnType(methodItem, xmlMethodObj, ref sbr_mdFileForMethod);
+
+                string fileNameOnly =this.GetValidFileName(methodItem.MethodName);
+
+                methodItem.MDFileNameWithoutExtension = this.CreateMD_File_UsingOldNotes_IfApplicable(fileNameOnly, subControllerFolderPath, subControllerFolderPath_Old, sbr_mdFileForMethod);
+            }
+        }
+        
         private string CreateMD_File_UsingOldNotes_IfApplicable(string fileNameOnly, string subControllerFolderPath, string subControllerFolderPath_Old, StringBuilder sbr_mdFileForMethod)
         {
             string mdFileName = fileNameOnly + ".md";
@@ -296,6 +255,79 @@ namespace Bajra.ApiMdGenerator
                 noteText = oldFileInMem.Substring(i + TemplateConsts.NOTE_SIGNATURE.Length);
 
             return noteText;
+        }
+
+        private void SetTemplateData_MethodParameters(ApiMethodObj methodItem, MethodXmlElement xmlMethodObj, ref StringBuilder sbr_mdFileForMethod)
+        {
+            StringBuilder sbr_RequiredParams = new StringBuilder();
+            StringBuilder sbr_OptionalParams = new StringBuilder();
+
+            foreach (var paramItem in methodItem.ParameterArray)
+            {
+                string paramDesc = xmlMethodObj?.ParamList.FirstOrDefault(t => t.Name == paramItem.ParamName)?.Value ?? "";
+
+                if (paramItem.IsFromBody)
+                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, string.Format(PADDING_PARAM + "`{0}=[{1}]` : {2}\r\n", paramItem.ParamName, paramItem.ParamTypeName, paramDesc));
+                else
+                {
+                    var refSbr = (paramItem.IsOptional) ? sbr_OptionalParams : sbr_RequiredParams;
+
+                    refSbr.AppendFormat(PADDING_PARAM + "`{0}=[{1}]` : {2}\r\n", paramItem.ParamName, paramItem.ParamTypeName, paramDesc);
+                    refSbr.AppendLine();
+                }
+            }
+
+            if (sbr_OptionalParams.Length == 0)
+                sbr_OptionalParams.AppendLine(PADDING_PARAM + "N/A");
+
+            if (sbr_RequiredParams.Length == 0)
+                sbr_RequiredParams.AppendLine(PADDING_PARAM + "N/A");
+
+            sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_LIST_REQUIRED, sbr_RequiredParams.ToString());
+
+            sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_LIST_OPTIONAL, sbr_OptionalParams.ToString());
+
+
+
+            if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.DatasParamFromBody))
+                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, xmlMethodObj.DatasParamFromBody);
+            else
+                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, TemplateConsts.TEXT_NONE);
+
+
+        }
+
+        private void SetTemplateData_ReturnType(ApiMethodObj methodItem, MethodXmlElement xmlMethodObj, ref StringBuilder sbr_mdFileForMethod)
+        {
+            string returnText = TemplateConsts.TEXT_NONE;
+            if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.Returns))
+                returnText = xmlMethodObj.Returns;
+            else if (methodItem.ReturnType != null)
+                returnText = methodItem.ReturnType.Name;
+
+            sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_RETURN_GENERIC_RESPONSE, returnText);
+
+
+            if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.Returns_WithSuccess))
+                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_SUCCESS_RESPONSE, xmlMethodObj.Returns_WithSuccess);
+            else
+                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_SUCCESS_RESPONSE, TemplateConsts.TEXT_NONE);
+
+
+            if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.Returns_WithFail))
+                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_FAIL_RESPONSE, xmlMethodObj.Returns_WithFail);
+            else
+                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_FAIL_RESPONSE, TemplateConsts.TEXT_NONE);
+
+        }
+
+        private void SetTemplateData_Example(ApiMethodObj methodItem, MethodXmlElement xmlMethodObj, ref StringBuilder sbr_mdFileForMethod)
+        {
+            if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.Example))
+                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_EXAMPLE, xmlMethodObj.Example);
+            else
+                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_EXAMPLE, TemplateConsts.TEXT_NONE);
+
         }
     }
 }

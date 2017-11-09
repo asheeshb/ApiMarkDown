@@ -31,20 +31,21 @@ namespace Bajra.ApiMdGenerator
               || type.Equals(typeof(decimal));
         }
 
-        public static string GetVersion(string assemblyPath)
+        public string GetVersion(string assemblyPath)
         {
             FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo(assemblyPath);
-            
+
             return myFileVersionInfo.FileVersion;
         }
 
-        public static IEnumerable<ApiControllerObj> GetApiControllerListForAssembly(string assemblyPath, string xmlPath = null)
+
+        public IEnumerable<ApiControllerObj> GetApiControllerListForAssembly(string assemblyPath, string xmlPath = null)
         {
             Assembly asm = Assembly.LoadFile(assemblyPath);
 
             Type[] asmType = asm.GetTypes();
 
-            List<Type> controllerTypeList = asmType.Where(type => type.IsSubclassOf(typeof(ApiController))).ToList();
+            List<Type> controllerTypeList = asmType.Where(t => t.IsSubclassOf(typeof(ApiController))).ToList();
 
             List<ApiControllerObj> controllers = new List<ApiControllerObj>();
 
@@ -63,10 +64,10 @@ namespace Bajra.ApiMdGenerator
                 }
             }
 
-            return controllers.OrderBy(t=> t.ControllerNamespace).ThenBy(t => t.ControllerName);
+            return controllers.OrderBy(t => t.ControllerNamespace).ThenBy(t => t.ControllerName);
         }
 
-        private static List<ApiMethodObj> ProcessApiMethods(Type controllerItem)
+        private List<ApiMethodObj> ProcessApiMethods(Type controllerItem)
         {
             List<ApiMethodObj> apiMethods = new List<ApiMethodObj>();
 
@@ -80,8 +81,15 @@ namespace Bajra.ApiMdGenerator
                 {
                     var m = new ApiMethodObj() { ControllerName = mInfo.DeclaringType.Name };
                     apiMethods.Add(m);
+                    try
+                    {
+                        m.ReturnType = MSMethods.GetReturnType(mInfo);//.ReturnType.Name,
+                    }
+                    catch (Exception e)
+                    {
 
-                    m.ReturnType = MSMethods.GetReturnType(mInfo);//.ReturnType.Name,
+                    }
+
                     var _attributeCache = mInfo.GetCustomAttributes(inherit: true);
 
                     m.MethodName = MSMethods.GetActionName(mInfo, _attributeCache);
@@ -103,7 +111,7 @@ namespace Bajra.ApiMdGenerator
             return apiMethods;
         }
 
-        private static void Process_MethodParams(MethodInfo mInfo, ref ApiMethodObj m)
+        private void Process_MethodParams(MethodInfo mInfo, ref ApiMethodObj m)
         {
             //m.Attributes = attribs.Select(a => a.GetType().Name.Replace("Attribute", "")).ToList();
 
@@ -141,7 +149,7 @@ namespace Bajra.ApiMdGenerator
             }
         }
 
-        private static ApiMethodParamObj GenerateApiMethodParamObj(ParameterInfo pInfo)
+        private ApiMethodParamObj GenerateApiMethodParamObj(ParameterInfo pInfo)
         {
             return new ApiMethodParamObj()
             {

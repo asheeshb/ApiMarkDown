@@ -27,7 +27,7 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
 ----
 ";
             if (!string.IsNullOrEmpty(imagePath))
-                sbrRef.Append(imagePath);
+                sbrRef.Append(imgLogo);
 
             sbrRef.Append(templateMain);
 
@@ -57,8 +57,9 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
             sbr.AppendLine();
             sbr.Append($"### {controllerName}");
             sbr.AppendLine();
-
-            string sadFace = "_No Comments_";// "![No comments !!](worried.png)";//"  :worried:";
+            
+            //string sadFace =  "_No Comments_";// "![No comments !!](worried.png)";//"  :worried:";
+            string sadFace = "![No comments !!](http://asheesh.buzz/cdn/sad16.png)";//"
 
             foreach (var m in methodObjList)
             {
@@ -95,7 +96,7 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
 
         private static string GetHyperlinkFormattedName(string namespaceBlockName)
         {
-            return namespaceBlockName.ToLower().Replace(".", "-");
+            return namespaceBlockName.ToLower();//.Replace(".", "-");
         }
     }
 }
