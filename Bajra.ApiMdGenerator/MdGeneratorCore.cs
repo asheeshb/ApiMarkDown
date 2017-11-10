@@ -75,7 +75,7 @@ namespace Bajra.ApiMdGenerator
 
             foreach (ApiControllerObj controllerItem in apiControllerList)
             {
-                var folderName = GetValidFileName(controllerItem.ControllerName);
+                var folderName = controllerItem.GetFolderName();
 
                 string subControllerFolderPath = Path.Combine(savePath, folderName);
 

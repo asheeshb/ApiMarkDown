@@ -21,5 +21,20 @@ namespace Bajra.ApiMdGenerator
         {
             return ControllerName;
         }
+
+        public string GetFolderName()
+        {
+            return GetValidFileName(this.ControllerNamespace + "." + this.ControllerName);
+        }
+
+        private string GetValidFileName(string currentName)
+        {
+            foreach (char c in System.IO.Path.GetInvalidFileNameChars())
+            {
+                currentName = currentName.Replace(c, '_');
+            }
+
+            return currentName;
+        }
     }
 }

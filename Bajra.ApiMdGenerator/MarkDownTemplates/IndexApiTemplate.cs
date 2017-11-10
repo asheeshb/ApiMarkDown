@@ -52,8 +52,10 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
 
         }
 
-        private static void AppendSingleApiBlock(ref StringBuilder sbr, string controllerName, List<ApiMethodObj> methodObjList)
+        private static void AppendSingleApiBlock(ref StringBuilder sbr, ApiControllerObj apiControllerObj)
         {
+            string controllerName = apiControllerObj.ControllerName;
+
             sbr.AppendLine();
             sbr.Append($"### {controllerName}");
             sbr.AppendLine();
@@ -61,9 +63,9 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
             //string sadFace =  "_No Comments_";// "![No comments !!](worried.png)";//"  :worried:";
             string sadFace = $"![No comments !!]({Consts.URL.SadSmiley_URL})";//"
 
-            foreach (var m in methodObjList)
+            foreach (var m in apiControllerObj.MethodArray)
             {
-                string hyperlinkToMd = $"{controllerName}/{ m.MDFileNameWithoutExtension}.md";
+                string hyperlinkToMd = $"{apiControllerObj.GetFolderName()}/{ m.MDFileNameWithoutExtension}.md";
                 sbr.Append($"1. [{m.MethodName}]({hyperlinkToMd})");
 
                 if (m.IsCommentingMissing)
@@ -86,7 +88,7 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
                 sbr_indexContent.Append($"     - [{a.ControllerName}](#{GetHyperlinkFormattedName(a.ControllerName)})");
                 sbr_indexContent.AppendLine();
 
-                AppendSingleApiBlock(ref sbr_mainContent, a.ControllerName, a.MethodArray);
+                AppendSingleApiBlock(ref sbr_mainContent, a);
             }
 
             sbr_mainContent.AppendLine();
