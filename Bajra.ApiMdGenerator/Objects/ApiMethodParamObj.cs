@@ -10,7 +10,11 @@ namespace Bajra.ApiMdGenerator
     public class ApiMethodParamObj
     {
         public string ParamName { get; set; }
+
         public string ParamTypeName { get; set; }
+
+        public string ParamTypeNameWithUrlLink { get; set; }
+
         public int Position { get; set; }
 
         //public bool IsIn { get; set; }
@@ -30,6 +34,14 @@ namespace Bajra.ApiMdGenerator
         public override string ToString()
         {
             return ParamName;
+        }
+
+        public string GetCorrectedParamTypeName()
+        {
+            if (!string.IsNullOrEmpty(this.ParamTypeNameWithUrlLink))
+                return this.ParamTypeNameWithUrlLink;
+            else
+                return this.ParamTypeName;
         }
     }
 }

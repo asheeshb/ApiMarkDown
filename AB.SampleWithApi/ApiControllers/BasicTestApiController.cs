@@ -79,5 +79,17 @@ namespace AB.SampleWithApi.ApiControllers
             return r;
         }
 
+        /// <summary>
+        /// Test nullable integer
+        /// </summary>
+        /// <param name="count"></param>
+        /// <returns></returns>
+        public HttpResponse CountTotal(int? count = null)
+        {
+            HttpResponse r = null;
+
+            return r;
+        }
+
     }
 }

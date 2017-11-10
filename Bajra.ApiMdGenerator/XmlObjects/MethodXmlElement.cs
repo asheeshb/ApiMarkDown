@@ -22,7 +22,7 @@ namespace Bajra.ApiMdGenerator.XmlObjects
         public string Returns_WithSuccess { get; set; } = null;
         public string Returns_WithFail { get; set; } = null;
 
-        public string DatasParamFromBody { get; set; } = null;
+        public string DataParamFromBody { get; set; } = null;
     }
 
 }

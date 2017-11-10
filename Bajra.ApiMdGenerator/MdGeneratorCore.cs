@@ -44,14 +44,9 @@ namespace Bajra.ApiMdGenerator
             if (!Directory.Exists(OldMdPath))
                 OldMdPath = null;
 
-            try
-            {
-                this.VersionInfo = AssemblyAnalyzerRef.GetVersion(this.DllFullFilePath);
-            }
-            catch
-            {
 
-            }
+            this.VersionInfo = AssemblyAnalyzer.GetVersion(this.DllFullFilePath);
+
         }
 
         public DirectoryInfo GenerateMDFilesForAssembly()
@@ -123,12 +118,14 @@ namespace Bajra.ApiMdGenerator
                 if (xmlCommentHelper != null)
                     xmlMethodObj = xmlCommentHelper.GetMemberDefinition(methodItem);
 
-                if (xmlMethodObj == null || string.IsNullOrWhiteSpace(xmlMethodObj.Returns) || string.IsNullOrWhiteSpace(xmlMethodObj.Summary))
+                if (xmlMethodObj == null || string.IsNullOrWhiteSpace(xmlMethodObj.Summary)
+                     || (string.IsNullOrWhiteSpace(xmlMethodObj.Returns) && string.IsNullOrWhiteSpace(xmlMethodObj.Returns_WithSuccess) && string.IsNullOrWhiteSpace(xmlMethodObj.Returns_WithFail))
+                     )
                     methodItem.IsCommentingMissing = true;
 
                 sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_ADDITIONAL_INFO, xmlMethodObj?.Summary);
 
-                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_URL, "/api/" + methodItem.MethodName.Replace("Controller", ""));
+                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_URL, $"/api/{ methodItem.ControllerName.Replace("Controller", "")}/{methodItem.MethodName}");
 
                 sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_METHOD_TYPE, methodTypes);
 
@@ -138,12 +135,12 @@ namespace Bajra.ApiMdGenerator
 
                 this.SetTemplateData_ReturnType(methodItem, xmlMethodObj, ref sbr_mdFileForMethod);
 
-                string fileNameOnly =this.GetValidFileName(methodItem.MethodName);
+                string fileNameOnly = this.GetValidFileName(methodItem.MethodName);
 
                 methodItem.MDFileNameWithoutExtension = this.CreateMD_File_UsingOldNotes_IfApplicable(fileNameOnly, subControllerFolderPath, subControllerFolderPath_Old, sbr_mdFileForMethod);
             }
         }
-        
+
         private string CreateMD_File_UsingOldNotes_IfApplicable(string fileNameOnly, string subControllerFolderPath, string subControllerFolderPath_Old, StringBuilder sbr_mdFileForMethod)
         {
             string mdFileName = fileNameOnly + ".md";
@@ -261,18 +258,24 @@ namespace Bajra.ApiMdGenerator
         {
             StringBuilder sbr_RequiredParams = new StringBuilder();
             StringBuilder sbr_OptionalParams = new StringBuilder();
+            string fromBodyParam = TemplateConsts.TEXT_NONE;
 
             foreach (var paramItem in methodItem.ParameterArray)
             {
                 string paramDesc = xmlMethodObj?.ParamList.FirstOrDefault(t => t.Name == paramItem.ParamName)?.Value ?? "";
 
                 if (paramItem.IsFromBody)
-                    sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, string.Format(PADDING_PARAM + "`{0}=[{1}]` : {2}\r\n", paramItem.ParamName, paramItem.ParamTypeName, paramDesc));
+                {
+                    fromBodyParam = string.Format("{0}=[{1}] : {2}\r\n", paramItem.ParamName, paramItem.GetCorrectedParamTypeName(), paramDesc);
+
+                    if (xmlMethodObj != null)
+                        xmlMethodObj.DataParamFromBody = fromBodyParam;
+                }
                 else
                 {
                     var refSbr = (paramItem.IsOptional) ? sbr_OptionalParams : sbr_RequiredParams;
 
-                    refSbr.AppendFormat(PADDING_PARAM + "`{0}=[{1}]` : {2}\r\n", paramItem.ParamName, paramItem.ParamTypeName, paramDesc);
+                    refSbr.AppendFormat(PADDING_PARAM + "{0}=[{1}] : {2}\r\n", paramItem.ParamName, paramItem.GetCorrectedParamTypeName(), paramDesc);
                     refSbr.AppendLine();
                 }
             }
@@ -287,12 +290,7 @@ namespace Bajra.ApiMdGenerator
 
             sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_LIST_OPTIONAL, sbr_OptionalParams.ToString());
 
-
-
-            if (xmlMethodObj != null && !string.IsNullOrEmpty(xmlMethodObj.DatasParamFromBody))
-                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, xmlMethodObj.DatasParamFromBody);
-            else
-                sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, TemplateConsts.TEXT_NONE);
+            sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY, fromBodyParam);
 
 
         }

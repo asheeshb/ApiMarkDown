@@ -59,7 +59,7 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
             sbr.AppendLine();
             
             //string sadFace =  "_No Comments_";// "![No comments !!](worried.png)";//"  :worried:";
-            string sadFace = "![No comments !!](http://asheesh.buzz/cdn/sad16.png)";//"
+            string sadFace = $"![No comments !!]({Consts.URL.SadSmiley_URL})";//"
 
             foreach (var m in methodObjList)
             {

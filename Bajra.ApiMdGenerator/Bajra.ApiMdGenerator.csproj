@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Consts\URL.cs" />
     <Compile Include="MdIndexGenerator.cs" />
     <Compile Include="MarkDownTemplates\IndexApiTemplate.cs" />
     <Compile Include="MarkDownTemplates\BasicApiTemplate.cs" />

@@ -1,5 +1,9 @@
 # ApiMarkDown:
 
+**Doc Version** : 1.1711.11.0    
+
+--- 
+
 Using this project one can create quick Mark Down Web API documentations for .NET APIs methods.
 
 Features:-
@@ -47,10 +51,11 @@ The project reference for **System.Web.Http** must match the version that is ref
 
 If required remove the existing **System.Web.Http** reference and point to any specific version of the same DLL.
 
+Known Issue: If the source dll has references in bin folder then these need to be copied to the application bin folder
+
 # TODO:
 
-* Support custom logo and date of generation optionally
-* Support generation of TOC.MD (table of content)
+* Support generating by pointing to parent reference only.
 * Support generation of node/ASP.NET site out of box.
 * Write unit test
 

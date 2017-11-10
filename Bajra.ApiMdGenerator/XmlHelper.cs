@@ -11,7 +11,7 @@ using Bajra.Utils;
 
 namespace Bajra.ApiMdGenerator
 {
-    public class XmlCommentHelper
+    public sealed class XmlCommentHelper
     {
         //Reference source: https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/xmldoc/recommended-tags-for-documentation-comments
 
@@ -85,7 +85,7 @@ namespace Bajra.ApiMdGenerator
                     if (c.Name == "summary")
                         memDef.Summary = this.GetXml_Summary(c);
                     else if (c.Name == "example")
-                        this.HandleXml_Example(c, ref memDef);
+                        memDef.Example = this.HandleXml_Example(c);
                     else if (c.Name == "returns")
                         this.HandleXml_Returns(c, ref memDef);
                     else if (c.Name == "param")
@@ -100,8 +100,8 @@ namespace Bajra.ApiMdGenerator
             if (string.IsNullOrWhiteSpace(memDef.Summary))
                 memDef.Summary = "No information found.";
 
-            if (string.IsNullOrWhiteSpace(memDef.DatasParamFromBody))
-                memDef.DatasParamFromBody = "N/A";
+            if (string.IsNullOrWhiteSpace(memDef.DataParamFromBody))
+                memDef.DataParamFromBody = "N/A";
 
             return memDef;
         }
@@ -116,13 +116,13 @@ namespace Bajra.ApiMdGenerator
             return sbr.ToString();
         }
 
-        private void HandleXml_Example(XmlElement ele, ref MethodXmlElement memDef)
+        private string HandleXml_Example(XmlNode ele)
         {
             StringBuilder sbr = new StringBuilder();
 
             ProcessInnerElement(ele, ref sbr, 1);
 
-            memDef.Example = sbr.ToString();
+            return sbr.ToString();
         }
 
         private void HandleXml_Returns(XmlElement ele, ref MethodXmlElement memDef)
@@ -143,9 +143,7 @@ namespace Bajra.ApiMdGenerator
                 {
                     XmlNode xmlNode = childNodeList[i];
 
-                    if (xmlNode.NodeType != XmlNodeType.Element && xmlNode.Name == "para")
-                        ProcessElement(xmlNode, ref sbrReturn, 1);
-                    else
+                    if (xmlNode.NodeType == XmlNodeType.Element && xmlNode.Name == "para")
                     {
                         if (xmlNode.InnerText.IsEqualToAny(StringComparison.InvariantCultureIgnoreCase, "fail", "failed", "fails"))
                             //keep reading subsequent nodes till not end OR success OR another Fail is encountered
@@ -154,8 +152,10 @@ namespace Bajra.ApiMdGenerator
                             //keep reading subsequent nodes till not end OR success OR another Fail is encountered
                             ProcessElement_Till_SuccessOrFailOrEnd(childNodeList, ref i, ref sbr_success, 1);
                         else
-                            ProcessInnerElement(xmlNode, ref sbrReturn, 1);
+                            ProcessInnerElement(xmlNode, ref sbrReturn, 0);
                     }
+                    else
+                        ProcessInnerElement(xmlNode, ref sbrReturn, 0);
 
                 }
             }
@@ -207,6 +207,8 @@ namespace Bajra.ApiMdGenerator
 
                     if (xmlNode.Name == "see")
                         sbr.AppendFormat(" **{0}** ", xmlNode.Attributes.Cast<XmlAttribute>().FirstOrDefault(a => a.Name == "cref")?.Value ?? "");
+                    else if (xmlNode.Name == "seealso")
+                        sbr.AppendFormat(" **{0}** ", xmlNode.Attributes.Cast<XmlAttribute>().FirstOrDefault(a => a.Name == "cref")?.Value ?? "");
                     else if (xmlNode.Name == "code")
                     {
                         sbr.AppendLine();
@@ -227,6 +229,13 @@ namespace Bajra.ApiMdGenerator
                         sbr.AppendLine();
                         ProcessInnerElement(xmlNode, ref sbr, currentPaddingTabCount);
                         sbr.AppendLine();
+                        sbr.AppendLine();
+                    }
+                    else if (xmlNode.Name == "example")
+                    {
+                        sbr.AppendLine();
+                        string strExample = this.HandleXml_Example(xmlNode);
+                        sbr.AppendLine(strExample);
                         sbr.AppendLine();
                     }
                     else

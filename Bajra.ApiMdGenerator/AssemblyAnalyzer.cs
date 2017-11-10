@@ -1,14 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Reflection;
-using System.Web.Mvc;
-using System.Net.Http;
-using System.Collections.ObjectModel;
-using System.Web.Http.Controllers;
-using System.Runtime.CompilerServices;
 using MicrosoftStuff;
 using System.Web.Http;
 using System.Diagnostics;
@@ -17,7 +10,7 @@ namespace Bajra.ApiMdGenerator
 {
     public class AssemblyAnalyzer
     {
-
+        #region Static Methods
         static bool IsSimpleType(Type type)
         {
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
@@ -31,13 +24,24 @@ namespace Bajra.ApiMdGenerator
               || type.Equals(typeof(decimal));
         }
 
-        public string GetVersion(string assemblyPath)
+        public static string GetVersion(string assemblyPath)
         {
-            FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo(assemblyPath);
+            try
+            {
+                FileVersionInfo myFileVersionInfo = FileVersionInfo.GetVersionInfo(assemblyPath);
 
-            return myFileVersionInfo.FileVersion;
+                return myFileVersionInfo.FileVersion;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+
         }
 
+        #endregion Static Methods
+
+        #region Public Methods
 
         public IEnumerable<ApiControllerObj> GetApiControllerListForAssembly(string assemblyPath, string xmlPath = null)
         {
@@ -67,27 +71,33 @@ namespace Bajra.ApiMdGenerator
             return controllers.OrderBy(t => t.ControllerNamespace).ThenBy(t => t.ControllerName);
         }
 
+        #endregion Public Methods
+
+        #region Private Methods
         private List<ApiMethodObj> ProcessApiMethods(Type controllerItem)
         {
             List<ApiMethodObj> apiMethods = new List<ApiMethodObj>();
 
             //src: https://stackoverflow.com/questions/21583278/getting-all-controllers-and-actions-names-in-c-sharp
-            try
-            {
-                List<MethodInfo> allPublicMethods = controllerItem.GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public)
-                    .Where(m => !m.GetCustomAttributes(typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute), true).Any()).ToList();
 
-                foreach (MethodInfo mInfo in allPublicMethods)
+            List<MethodInfo> allPublicMethods = controllerItem.GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly | BindingFlags.Public)
+                .Where(m => !m.GetCustomAttributes(typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute), true).Any()).ToList();
+
+            foreach (MethodInfo mInfo in allPublicMethods)
+            {
+                try
                 {
-                    var m = new ApiMethodObj() { ControllerName = mInfo.DeclaringType.Name };
+                    var m = new ApiMethodObj()
+                    {
+                        ControllerName = mInfo.DeclaringType.Name
+                    };
+
                     apiMethods.Add(m);
                     try
+                    { m.ReturnType = MSMethods.GetReturnType(mInfo); }
+                    catch (Exception ex)
                     {
-                        m.ReturnType = MSMethods.GetReturnType(mInfo);//.ReturnType.Name,
-                    }
-                    catch (Exception e)
-                    {
-
+                        Console.Write(ex);
                     }
 
                     var _attributeCache = mInfo.GetCustomAttributes(inherit: true);
@@ -102,12 +112,12 @@ namespace Bajra.ApiMdGenerator
 
                     Process_MethodParams(mInfo, ref m);
                 }
+                catch (Exception ex)
+                {
+                    Console.Write(ex);
+                }
             }
-            catch (Exception e)
-            {
-
-            }
-
+            
             return apiMethods;
         }
 
@@ -151,7 +161,7 @@ namespace Bajra.ApiMdGenerator
 
         private ApiMethodParamObj GenerateApiMethodParamObj(ParameterInfo pInfo)
         {
-            return new ApiMethodParamObj()
+            ApiMethodParamObj returnObj = new ApiMethodParamObj()
             {
                 ParamName = pInfo.Name,
                 ParamTypeName = pInfo.ParameterType.FullName,
@@ -162,7 +172,28 @@ namespace Bajra.ApiMdGenerator
                 //IsOut = p.IsOut,
                 //IsRetval = p.IsRetval,
             };
-        }
 
+            var pInfo_type = pInfo.ParameterType;
+            var underlyingType = Nullable.GetUnderlyingType(pInfo_type);
+            var actualType = underlyingType ?? pInfo_type;
+
+            returnObj.ParamTypeName = actualType.FullName;
+
+            if (actualType.FullName != null)
+            {
+                string lowerCaseName = actualType.FullName.ToLower();
+
+                if (lowerCaseName.StartsWith("system.") || lowerCaseName.StartsWith("microsoft."))
+                    returnObj.ParamTypeNameWithUrlLink = string.Format("[{0}]({1}{2})",
+                        actualType.FullName, Consts.URL.MicrosoftAPI_Docs, lowerCaseName);
+                else if (lowerCaseName.StartsWith("newtonsoft."))
+                    returnObj.ParamTypeNameWithUrlLink = string.Format("[{0}]({1}{2})",
+                      actualType.FullName, Consts.URL.NewtonsoftAPI_Docs, lowerCaseName.Replace(".", "_"));
+            }
+
+            return returnObj;
+        }
+        
+        #endregion Private Methods
     }
 }
