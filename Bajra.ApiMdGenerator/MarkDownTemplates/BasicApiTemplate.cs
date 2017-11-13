@@ -37,19 +37,19 @@ namespace Bajra.ApiMdGenerator.MarkDownTemplates
 
 ----
 
-### URL Params :
+### URL Prameter(s) :
 
-* ***Required***
+***Required Prameter(s):***
  
 {TemplateConsts.PLACEHOLDER_PARAM_LIST_REQUIRED}
 
-* ***Optional:***
+***Optional Prameter(s):***
  
 {TemplateConsts.PLACEHOLDER_PARAM_LIST_OPTIONAL}
 ";
             //----------------------------------------------
             string postStr = $@"
-### Data Params :
+### Data Parameter :
 
 {TemplateConsts.PLACEHOLDER_PARAM_FROM_BODY}
 

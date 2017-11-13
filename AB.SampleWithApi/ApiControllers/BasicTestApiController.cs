@@ -13,7 +13,12 @@ namespace AB.SampleWithApi.ApiControllers
         /// Test next line
         /// <see cref="AB.SampleWithApi.MyDto"/>
         /// </summary>
-        /// <param name="a">input of json format </param>
+        /// <param name="jsonData">
+        ///     input of json format 
+        ///     <code>
+        ///         [{name:'aaa'}]
+        ///     </code>
+        /// </param>
         /// <returns>
         ///     some other return text 
         ///     <para>For fun</para> text here also
@@ -41,7 +46,7 @@ namespace AB.SampleWithApi.ApiControllers
         ///  call example
         /// </example>
         [HttpPost]
-        public HttpResponse SaveSomeData([FromBody]string a)
+        public HttpResponse SaveSomeData([FromBody]string jsonData)
         {
 
             HttpResponse r = null;
@@ -55,11 +60,16 @@ namespace AB.SampleWithApi.ApiControllers
         ///  Saves some data to server.
         /// </summary>
         /// <example></example>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
+        /// <param name="userName"></param>
+        /// <param name="someJsonString">
+        ///     input of json format 
+        ///     <code>
+        ///         [{name:'aaa'}]
+        ///     </code>
+        /// </param>
         /// <returns></returns>
         [HttpPost]
-        public HttpResponse SaveAnotherDataToServer([FromBody]string a, string b)
+        public HttpResponse SaveAnotherDataToServer([FromBody]string userName, string someJsonString)
         {
             HttpResponse r = null;
 

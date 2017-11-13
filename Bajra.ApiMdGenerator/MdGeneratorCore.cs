@@ -14,6 +14,7 @@ namespace Bajra.ApiMdGenerator
 {
     public class MdGeneratorCore
     {
+        const string CONST_NotApplicable = "Not Applicable";
         private string DllFullFilePath { get; set; }
         private string XmlFullFilePath { get; set; }
         private string SavePath { get; set; }
@@ -264,9 +265,17 @@ namespace Bajra.ApiMdGenerator
             {
                 string paramDesc = xmlMethodObj?.ParamList.FirstOrDefault(t => t.Name == paramItem.ParamName)?.Value ?? "";
 
+                string appendingString = $"* **{paramItem.ParamName}** [{paramItem.GetCorrectedParamTypeName()}]";
+
                 if (paramItem.IsFromBody)
                 {
-                    fromBodyParam = string.Format("{0}=[{1}] : {2}\r\n", paramItem.ParamName, paramItem.GetCorrectedParamTypeName(), paramDesc);
+                    StringBuilder sbr_FromBody = new StringBuilder();
+
+                    sbr_FromBody.AppendLine(appendingString);
+                    sbr_FromBody.AppendLine(PADDING_PARAM + paramDesc);
+                    sbr_FromBody.AppendLine();
+
+                    fromBodyParam = sbr_FromBody.ToString();
 
                     if (xmlMethodObj != null)
                         xmlMethodObj.DataParamFromBody = fromBodyParam;
@@ -275,16 +284,17 @@ namespace Bajra.ApiMdGenerator
                 {
                     var refSbr = (paramItem.IsOptional) ? sbr_OptionalParams : sbr_RequiredParams;
 
-                    refSbr.AppendFormat(PADDING_PARAM + "{0}=[{1}] : {2}\r\n", paramItem.ParamName, paramItem.GetCorrectedParamTypeName(), paramDesc);
+                    refSbr.AppendLine(appendingString);
+                    refSbr.AppendLine(PADDING_PARAM + paramDesc);
                     refSbr.AppendLine();
                 }
             }
 
             if (sbr_OptionalParams.Length == 0)
-                sbr_OptionalParams.AppendLine(PADDING_PARAM + "N/A");
+                sbr_OptionalParams.AppendLine(CONST_NotApplicable);
 
             if (sbr_RequiredParams.Length == 0)
-                sbr_RequiredParams.AppendLine(PADDING_PARAM + "N/A");
+                sbr_RequiredParams.AppendLine(CONST_NotApplicable);
 
             sbr_mdFileForMethod.Replace(TemplateConsts.PLACEHOLDER_PARAM_LIST_REQUIRED, sbr_RequiredParams.ToString());
 
