@@ -1,6 +1,6 @@
 # ApiMarkDown:
 
-**Doc Version** : 1.1711.11.0    
+**Doc Version** : 1.1711.15.0    
 
 --- 
 
@@ -14,7 +14,7 @@ Features:-
 * Supports for overridden methods.
 * Support for reuse of manually added text in the generated MD file to get inserted within the next MD generation cycle. *However this is supported for the *Note* section only*.
 * Read the FromBody attribute or automatically figure it out if it is a custom type and it is the only param.
-
+* Made use of [Markdig](https://github.com/lunet-io/markdig) to generate html.
 
 **Prerequisite**:
 
@@ -56,6 +56,7 @@ Known Issue: If the source dll has references in bin folder then these need to b
 # TODO:
 
 * Support generating by pointing to parent reference only.
+* Make Index generation optional.
 * Support generation of node/ASP.NET site out of box.
 * Write unit test
 

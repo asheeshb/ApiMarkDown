@@ -62,7 +62,7 @@ namespace Bajra.ApiMdGenerator
             DirectoryInfo dirInfo = (!Directory.Exists(finalFolderPath)) ? Directory.CreateDirectory(finalFolderPath) : new DirectoryInfo(finalFolderPath);
 
             this.GenerateMD(apiControllerList, finalFolderPath, this.XmlFullFilePath, possibleOldPath);
-
+                        
             return dirInfo;
         }
 
@@ -98,7 +98,9 @@ namespace Bajra.ApiMdGenerator
 
             string assemblyName = Path.GetFileName(DllFullFilePath);
 
-            MdIndexGenerator gen = new MdIndexGenerator(savePath, apiControllerList, VersionInfo, assemblyName, this.ImagePath, true);
+            MdIndexGenerator gen = new MdIndexGenerator(savePath, apiControllerList, VersionInfo, assemblyName, this.ImagePath, true, "html");
+
+            MdToHtml.GenerateHtmlFile(gen.IndexFilePathAndName);
         }
 
         private void Process_ApiMethodObj(ApiControllerObj controllerItem, XmlCommentHelper xmlCommentHelper, string dateTimeString, string subControllerFolderPath, string subControllerFolderPath_Old)
@@ -138,14 +140,17 @@ namespace Bajra.ApiMdGenerator
 
                 string fileNameOnly = this.GetValidFileName(methodItem.MethodName);
 
-                methodItem.MDFileNameWithoutExtension = this.CreateMD_File_UsingOldNotes_IfApplicable(fileNameOnly, subControllerFolderPath, subControllerFolderPath_Old, sbr_mdFileForMethod);
+                string fullMdFileAndPath = "";
+                methodItem.MDFileNameWithoutExtension = this.CreateMD_File_UsingOldNotes_IfApplicable(fileNameOnly, subControllerFolderPath, subControllerFolderPath_Old, sbr_mdFileForMethod, out fullMdFileAndPath);
+
+                MdToHtml.GenerateHtmlFile(fullMdFileAndPath);
             }
         }
 
-        private string CreateMD_File_UsingOldNotes_IfApplicable(string fileNameOnly, string subControllerFolderPath, string subControllerFolderPath_Old, StringBuilder sbr_mdFileForMethod)
+        private string CreateMD_File_UsingOldNotes_IfApplicable(string fileNameOnly, string subControllerFolderPath, string subControllerFolderPath_Old, StringBuilder sbr_mdFileForMethod, out string fullMdFileAndPath)
         {
             string mdFileName = fileNameOnly + ".md";
-            string fullMdFileAndPath = Path.Combine(subControllerFolderPath, mdFileName);
+            fullMdFileAndPath = Path.Combine(subControllerFolderPath, mdFileName);
 
             int ctr = 1;
 

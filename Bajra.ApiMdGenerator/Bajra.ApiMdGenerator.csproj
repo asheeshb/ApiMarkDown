@@ -30,6 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Markdig, Version=0.14.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Markdig.0.14.3\lib\net40\Markdig.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.AspNet.Identity.Core, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.AspNet.Identity.Core.2.2.1\lib\net45\Microsoft.AspNet.Identity.Core.dll</HintPath>
     </Reference>
@@ -56,6 +59,7 @@
     <Compile Include="MarkDownTemplates\BasicApiTemplate.cs" />
     <Compile Include="MdGeneratorCore.cs" />
     <Compile Include="MarkDownTemplates\TemplateConsts.cs" />
+    <Compile Include="MdToHtml.cs" />
     <Compile Include="Objects\ApiControllerObj.cs" />
     <Compile Include="Objects\ApiMethodParamObj.cs" />
     <Compile Include="Objects\ApiMethodObj.cs" />
@@ -74,7 +78,9 @@
     <None Include="MarkDownTemplates\Resource\BasicApiTemplate.md">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
